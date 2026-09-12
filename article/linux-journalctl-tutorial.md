@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: systemd (systemd 256) | **POSIX**: Linux-Specific (systemd extension) | **Safety Tier**: safe-read-only | **Scope**: systemd-journal-logging
+
 `journalctl` is the command-line interface for querying and analyzing logs captured by the `systemd-journald` service. It indexes structured binary journal files containing kernel ring buffer messages, system daemon output, stdout/stderr streams from service units, audit events, and syslog entries.
 
 - **Upstream Project & Provenance**: Maintained within **systemd** (`systemd`) as the dedicated client for `systemd-journald`.
@@ -90,24 +92,47 @@ Traditional syslog daemons store messages as unindexed plain text in `/var/log/s
 
 ## 4. Basic Usage
 
-### 4.1 Viewing Recent System Logs
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Recent system logs | `journalctl -n [N] --no-pager` | `journalctl -n 50 --no-pager` | Displays recent entries directly to stdout |
+| Filter by unit | `journalctl -u [unit]` | `journalctl -u sshd.service -n 20` | Scopes logs strictly to specific daemon |
+| Follow logs live | `journalctl -u [unit] -f` | `journalctl -u nginx.service -f` | Live streaming log tail |
+| Errors from prior boot | `journalctl -b -1 -p err` | `journalctl -b -1 -p err` | Quickly diagnoses reasons for past reboot |
+| Time window filter | `journalctl --since [time]` | `journalctl --since "30 minutes ago"` | Isolates incident timeframe |
+| Kernel ring buffer | `journalctl -k -b 0` | `journalctl -k -b 0 -p warning` | Inspects dmesg warnings from current boot |
+| Check disk usage | `journalctl --disk-usage` | `journalctl --disk-usage` | Shows total space consumed by journals |
+| Vacuum journal archives | `journalctl --vacuum-size=[size]` | `sudo journalctl --vacuum-size=500M` | Trims older archived journals safely |
+
+### 4.2 Viewing Recent System Logs
 
 Display the most recent 50 system log entries without invoking a pager:
 
+```bash
+journalctl -n 50 --no-pager
+```
+
+Output:
+
 ```console
-$ journalctl -n 50 --no-pager
 Sep 12 18:45:01 server CRON[14201]: (root) CMD (/usr/local/bin/backup-check.sh)
 Sep 12 18:50:12 server systemd[1]: Starting Daily apt download activities...
 Sep 12 18:50:14 server systemd[1]: apt-daily.service: Deactivated successfully.
 Sep 12 18:50:14 server systemd[1]: Finished Daily apt download activities.
 ```
 
-### 4.2 Inspecting Service Logs
+### 4.3 Inspecting Service Logs
 
 Filter entries strictly emitted by a specific daemon:
 
+```bash
+journalctl -u sshd.service -n 20
+```
+
+Output:
+
 ```console
-$ journalctl -u sshd.service -n 20
 Sep 12 10:00:15 server systemd[1]: Starting OpenSSH server daemon...
 Sep 12 10:00:15 server sshd[789]: Server listening on 0.0.0.0 port 22.
 Sep 12 10:00:15 server sshd[789]: Server listening on :: port 22.
@@ -115,12 +140,12 @@ Sep 12 10:00:15 server systemd[1]: Started OpenSSH server daemon.
 Sep 12 10:14:22 server sshd[1024]: Accepted publickey for admin from 192.168.1.10 port 54210 ssh2
 ```
 
-### 4.3 Streaming Real-Time Service Logs
+### 4.4 Streaming Real-Time Service Logs
 
 Follow active service log streams in real time as events occur:
 
-```console
-$ journalctl -u nginx.service -f
+```bash
+journalctl -u nginx.service -f
 ```
 
 ---
@@ -132,16 +157,26 @@ $ journalctl -u nginx.service -f
 When troubleshooting unexpected reboots, kernel panics, or failed services from a prior system session:
 
 1. **List all recorded boots**:
+   ```bash
+   journalctl --list-boots
+   ```
+
+   Output:
+
    ```console
-   $ journalctl --list-boots
    -2 8a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d Wed 2026-09-09 08:00:12 UTC—Wed 2026-09-09 18:30:45 UTC
    -1 1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c Thu 2026-09-10 09:12:00 UTC—Fri 2026-09-11 22:45:10 UTC
     0 9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c Sat 2026-09-12 00:00:10 UTC—Sat 2026-09-12 19:15:00 UTC
    ```
 
 2. **Query errors (`-p err`) from the previous boot (`-b -1`)**:
+   ```bash
+   journalctl -b -1 -p err
+   ```
+
+   Output:
+
    ```console
-   $ journalctl -b -1 -p err
    Sep 11 22:44:50 server kernel: Out of memory: Killed process 8492 (java) total-vm:8451200kB, anon-rss:4120150kB
    Sep 11 22:45:01 server systemd[1]: myapp.service: Main process exited, code=killed, status=9/KILL
    Sep 11 22:45:01 server systemd[1]: myapp.service: Failed with result 'oom-kill'.
@@ -169,8 +204,13 @@ journalctl --since "today"
 
 Query kernel hardware discovery, storage attachment, and driver warnings directly from the journal:
 
+```bash
+journalctl -k -b 0 -p warning
+```
+
+Output:
+
 ```console
-$ journalctl -k -b 0 -p warning
 Sep 12 00:00:11 server kernel: ACPI: button: System will not sleep on any button press
 Sep 12 00:00:12 server kernel: nvme nvme0: 8/0/0 default/read/poll queues
 Sep 12 00:00:14 server kernel: EXT4-fs (sda2): re-mounted. Opts: errors=remount-ro.
@@ -180,8 +220,13 @@ Sep 12 00:00:14 server kernel: EXT4-fs (sda2): re-mounted. Opts: errors=remount-
 
 Check total storage consumed by journal files:
 
+```bash
+journalctl --disk-usage
+```
+
+Output:
+
 ```console
-$ journalctl --disk-usage
 Archived and active journals take up 1.2G in the file system.
 ```
 
@@ -232,8 +277,13 @@ journalctl _SYSTEMD_UNIT=nginx.service + _SYSTEMD_UNIT=php-fpm.service
 
 Export log events formatted as structured JSON for ingestion into Elasticsearch, OpenSearch, or SIEM platforms:
 
-```console
-$ journalctl -u sshd.service -n 1 -o json-pretty
+```bash
+journalctl -u sshd.service -n 1 -o json-pretty
+```
+
+Output:
+
+```json
 {
 	"_BOOT_ID" : "9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c",
 	"_CAP_EFFECTIVE" : "1ffffffffff",
@@ -298,12 +348,13 @@ sudo journalctl --verify
 
 ### 8.1 Non-Destructive Operation
 
-`journalctl` is a read-only query utility. The only modifying operations are `--vacuum-size` and `--vacuum-time`, which cleanly purge older archived journals according to retention policies without corrupting active journals.
+> [!NOTE]
+> **Read-Only Safety**: `journalctl` is primarily a read-only inspection utility. The only mutating actions are `--vacuum-size` and `--vacuum-time`, which purge old archived logs according to retention limits without corrupting active journals.
 
 ### 8.2 Access Control and Privilege Boundaries
 
-- **Unprivileged Users**: Can view logs generated by their own user services via `journalctl --user`.
-- **System-Wide Logs**: Viewing system services, authentication logs, and kernel messages requires `root` privileges or membership in the `systemd-journal`, `adm`, or `wheel` groups.
+> [!IMPORTANT]
+> Unprivileged users can only view logs generated by their own user session. Viewing system-wide service logs or kernel ring messages requires `root` privileges or membership in `systemd-journal`, `adm`, or `wheel` groups.
 
 ### 8.3 Portability Constraints
 
@@ -314,6 +365,9 @@ sudo journalctl --verify
 ## 9. Best Practices
 
 ### 9.1 Combine `-u` With Time Filters for Targeted Troubleshooting
+
+> [!TIP]
+> **Scope Queries by Service and Time**: Running unfiltered `journalctl` scans millions of entries. Always constrain queries using `-u <unit>` and time windows (`--since "1 hour ago"` or `-b`) for fast response times.
 
 *Upstream Rationale*: Running `journalctl` without filters forces the utility to load millions of log entries across the entire operating system history. Always scope queries to the target service (`-u <unit>`) and time boundary (`-b` or `--since "1 hour ago"`).
 
