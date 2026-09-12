@@ -1,0 +1,68 @@
+[
+  {
+    "command": "find",
+    "article_filename": "article/linux-find-tutorial.md",
+    "upstream_suite": "gnu-findutils",
+    "upstream_package": "findutils",
+    "upstream_homepage": "https://www.gnu.org/software/findutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/findutils/manual/html_node/find_html/index.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/findutils.git/tree/find/find.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Findutils 4.10",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "xargs",
+    "article_filename": "article/linux-xargs-tutorial.md",
+    "upstream_suite": "gnu-findutils",
+    "upstream_package": "findutils",
+    "upstream_homepage": "https://www.gnu.org/software/findutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/findutils/manual/html_node/find_html/xargs-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/findutils.git/tree/xargs/xargs.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Findutils 4.10",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "locate",
+    "article_filename": "article/linux-locate-tutorial.md",
+    "upstream_suite": "gnu-findutils",
+    "upstream_package": "findutils",
+    "upstream_homepage": "https://www.gnu.org/software/findutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/findutils/manual/html_node/find_html/locate-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/findutils.git/tree/locate/locate.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "GNU Findutils 4.10",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  }
+]
