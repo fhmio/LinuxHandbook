@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: curl (curl 8.12.0) | **POSIX**: None (De-facto Standard) | **Safety Tier**: unprivileged-filesystem-write | **Scope**: network-transfer-http
+
 `curl` is a command-line utility and client library for transferring data using network protocols including HTTP, HTTPS, FTP, FTPS, SFTP, SCP, LDAP, IMAP, and SMTP. It provides robust control over HTTP methods, request headers, cookies, authentication mechanisms, proxy connections, and SSL/TLS validation.
 
 - **Upstream Project & Provenance**: Created by Daniel Stenberg, maintained by the **curl** project (`curl`), built upon `libcurl`.
@@ -89,12 +91,29 @@ curl [options / URLs...]
 
 ## 4. Basic Usage
 
-### 4.1 Retrieving Web Content to Standard Output
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Retrieve URL content | `curl [url]` | `curl https://httpbin.org/get` | Streams payload directly to stdout |
+| Inspect response headers | `curl -I [url]` | `curl -I https://www.example.com` | Sends HEAD request to check headers |
+| Download file locally | `curl -fSL -O [url]` | `curl -fSL -O https://example.com/archive.tar.gz` | Follows redirects and writes remote name |
+| Silent fail in scripts | `curl -sSfL [url] -o [file]` | `curl -sSfL https://example.com/file.txt -o file.txt` | Exits non-zero on HTTP errors without progress bar |
+| JSON POST request | `curl -sS -X POST [url] -H ... -d ...` | `curl -sS -X POST https://api.example.com/data -H "Content-Type: application/json" -d '{"key":"value"}'` | Sends structured JSON body |
+| Resume download | `curl -C - -O [url]` | `curl -C - -O https://example.com/large.iso` | Resumes interrupted download from byte offset |
+| Unix socket query | `curl --unix-socket [path] [url]` | `sudo curl --unix-socket /var/run/docker.sock http://localhost/version` | Communicates with local daemon IPC sockets |
+
+### 4.2 Retrieving Web Content to Standard Output
 
 Download a remote webpage or API response directly:
 
-```console
-$ curl https://httpbin.org/get
+```bash
+curl https://httpbin.org/get
+```
+
+Output:
+
+```json
 {
   "args": {}, 
   "headers": {
@@ -107,12 +126,17 @@ $ curl https://httpbin.org/get
 }
 ```
 
-### 4.2 Inspecting Response Headers with `-I`
+### 4.3 Inspecting Response Headers with `-I`
 
 Inspect server headers, caching policies, and status codes without downloading payload bodies:
 
+```bash
+curl -I https://www.example.com
+```
+
+Output:
+
 ```console
-$ curl -I https://www.example.com
 HTTP/2 200 
 content-type: text/html; charset=UTF-8
 content-length: 1256
@@ -122,7 +146,7 @@ etag: "3147526947"
 server: ECS (dcb/7F42)
 ```
 
-### 4.3 Downloading Files Locally with Progress
+### 4.4 Downloading Files Locally with Progress
 
 Save a remote asset locally matching its remote filename (`-O`) while following redirects (`-L`):
 
@@ -159,8 +183,13 @@ Output:
 
 Resume an interrupted multi-gigabyte ISO download without restarting from byte zero:
 
+```bash
+curl -C - -O https://releases.ubuntu.com/noble/ubuntu-24.04-live-server-amd64.iso
+```
+
+Output:
+
 ```console
-$ curl -C - -O https://releases.ubuntu.com/noble/ubuntu-24.04-live-server-amd64.iso
 ** Resuming transfer from byte position 489210450
 ###################################################                       78.2%
 ```
@@ -169,15 +198,19 @@ $ curl -C - -O https://releases.ubuntu.com/noble/ubuntu-24.04-live-server-amd64.
 
 Use `-w` (`--write-out`) to extract millisecond-precision timing breakdowns across DNS, TCP connect, TLS handshake, and transfer phases:
 
-```console
-$ curl -s -o /dev/null -w "\
+```bash
+curl -s -o /dev/null -w "\
     DNS Lookup:        %{time_namelookup}s\n\
     TCP Connect:       %{time_connect}s\n\
     TLS Handshake:     %{time_appconnect}s\n\
     Time to First Byte:%{time_starttransfer}s\n\
     Total Time:        %{time_total}s\n\
     HTTP Status Code:  %{http_code}\n" https://www.example.com
+```
 
+Output:
+
+```text
     DNS Lookup:        0.012410s
     TCP Connect:       0.038192s
     TLS Handshake:     0.079450s
@@ -205,8 +238,13 @@ curl -fS -X POST https://api.example.com/v1/media \
 
 Communicate directly with local daemons (such as the Docker or containerd APIs) without exposing TCP sockets:
 
-```console
-$ sudo curl --unix-socket /var/run/docker.sock http://localhost/v1.41/version
+```bash
+sudo curl --unix-socket /var/run/docker.sock http://localhost/v1.41/version
+```
+
+Output:
+
+```json
 {
   "Platform": { "Name": "Docker Engine - Community" },
   "Version": "26.1.4",
@@ -285,11 +323,13 @@ curl -sSfL \
 
 ### 8.1 Insecure TLS Bypasses (`-k`, `--insecure`)
 
-Using `-k` disables all cryptographic verification of the remote server's TLS certificate. This exposes the connection to Man-in-the-Middle (MITM) attacks. In production, never supply `-k`; instead, configure the proper private CA certificate via `--cacert /path/to/ca.pem`.
+> [!CAUTION]
+> **Insecure TLS Bypasses (`-k`, `--insecure`)**: Using `-k` disables all cryptographic verification of the remote server's TLS certificate, completely opening connections to Man-in-the-Middle (MITM) attacks. Never pass `-k` in production environments; use `--cacert /path/to/ca.pem` to specify custom CA certificates.
 
 ### 8.2 Credential Exposure in Process Tables
 
-Passing passwords directly in flags (e.g. `-u user:password`) exposes plaintext credentials to all system users through `/proc/<pid>/cmdline` and `ps`. Always pass credentials via netrc files (`--netrc-file`) or environment variables piped into standard input.
+> [!WARNING]
+> Passing credentials directly in flags (e.g. `-u user:password`) exposes plaintext credentials to all system users through `/proc/<pid>/cmdline` and process inspection tools. Use `--netrc-file` or environment pipes instead.
 
 ### 8.3 Portability Constraints
 
@@ -301,9 +341,15 @@ Passing passwords directly in flags (e.g. `-u user:password`) exposes plaintext 
 
 ### 9.1 Always Combine `-f` and `-sS` in Shell Automation
 
+> [!TIP]
+> **Always Combine `-f` and `-sS` in Automation**: By default, `curl` exits with status `0` even on HTTP `404` or `500` responses, saving error HTML into files. Combining `-f` (`--fail`) with `-sS` (`--silent --show-error`) guarantees non-zero exit codes on server errors while keeping pipelines clean.
+
 *Upstream Rationale*: By default, `curl` exits with status `0` even if an HTTP server returns `404 Not Found` or `500 Internal Server Error`, writing HTML error pages into target files. Combining `-f` (`--fail`) and `-sS` (`--silent --show-error`) guarantees that HTTP error codes trigger non-zero script failures while suppressing terminal progress bars.
 
 ### 9.2 Always Define Explicit Connection and Execution Timeouts
+
+> [!IMPORTANT]
+> **Define Explicit Timeouts**: `curl` defaults to waiting indefinitely if TCP connections stall silently. Always set `--connect-timeout` (e.g. 5–10s) and `--max-time` (e.g. 30–60s) in automation scripts.
 
 *Upstream Rationale*: `curl(1)` documentation notes that `curl` defaults to waiting indefinitely for server responses if TCP connections stall silently. In automated pipelines, always enforce `--connect-timeout` (e.g. 5–10s) and `--max-time` (e.g. 30–60s) to prevent unbounded thread execution.
 
