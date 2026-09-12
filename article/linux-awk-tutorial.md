@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: GNU GAWK 5.3.0 | **POSIX**: POSIX.1-2024 (with GNU extensions) | **Safety Tier**: safe-read-only | **Scope**: text-processing
+
 `awk` is a Turing-complete, pattern-directed scanning and processing language. It parses input streams into records (lines) and fields (columns), executing action blocks on records matching specified patterns or conditional expressions.
 
 - **Upstream Project & Provenance**: The standard Linux implementation is **GNU Awk** (GAWK), maintained by the Free Software Foundation.
@@ -77,7 +79,19 @@ pattern { action }
 
 ## 4. Basic Usage
 
-### 4.1 Printing Specific Columns
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Print specific column | `awk '{print $1}' file.txt` | Prints 1st column separated by whitespace |
+| Custom delimiter | `awk -F: '{print $1, $7}' /etc/passwd` | Uses `:` as field separator |
+| Filter by condition | `awk '$3 > 100 {print $1, $3}' data.txt` | Prints when 3rd field exceeds 100 |
+| Match regex on field | `awk '$1 ~ /^192\.168/ {print $1}' access.log` | Matches IP address prefix |
+| Sum a column | `awk '{sum += $1} END {print sum}' numbers.txt` | Accumulates total and prints at EOF |
+| Count rows matching pattern | `awk '/ERROR/ {count++} END {print count}' app.log` | Pattern occurrence counter |
+| Print line numbers with content | `awk '{print NR, $0}' file.txt` | Prefixes current record number |
+
+### 4.2 Printing Specific Columns
 
 Printing username and shell from `/etc/passwd`:
 
@@ -90,7 +104,7 @@ daemon /usr/sbin/nologin
 bin /usr/sbin/nologin
 ```
 
-### 4.2 Pattern Filtering
+### 4.3 Pattern Filtering
 
 Printing processes consuming more than 10% CPU:
 
@@ -181,14 +195,15 @@ awk 'BEGIN {RS=""; FS="\n"} {print "Paragraph:", NR, "Lines:", NF}' document.txt
 
 ### 8.1 Passing External Shell Variables
 
-- Avoid interpolating shell variables directly into AWK strings:
+> [!WARNING]
+> Direct shell variable interpolation into AWK scripts (`awk "{print \"$USER_INPUT\"}" file`) creates critical shell injection vulnerabilities. Always use `-v target="$USER_INPUT"` to pass variables safely into the AWK runtime environment.
+
+- **Vulnerable Injection Pattern**:
   ```bash
-  # DANGEROUS / INJECTION RISK:
   awk "{print \"$USER_INPUT\"}" file
   ```
-- Always pass shell variables safely via the `-v` parameter:
+- **Safe Parameter Injection**:
   ```bash
-  # SAFE:
   awk -v target="$USER_INPUT" '$1 == target {print $2}' file
   ```
 
