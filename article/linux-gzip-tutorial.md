@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: gnu-gzip (GNU gzip 1.13) | **POSIX**: None (De-facto Standard / RFC 1952) | **Safety Tier**: unprivileged-filesystem-write | **Scope**: stream-compression
+
 `gzip` (GNU zip) is a standard file compression and decompression utility utilizing the DEFLATE algorithm (a combination of LZ77 and Huffman coding). It reduces the size of individual files, replaces original files in-place with `.gz` archives, and preserves file timestamps, permissions, and ownership.
 
 - **Upstream Project & Provenance**: Maintained by the **GNU Project** under **GNU gzip** (`gzip`), originally developed by Jean-loup Gailly and Mark Adler.
@@ -80,24 +82,46 @@ A critical behavioral characteristic of `gzip` is **in-place file replacement**:
 
 ## 4. Basic Usage
 
-### 4.1 Compressing Files while Retaining Originals (`-k`)
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Compress keep original | `gzip -k [file]` | `gzip -kv access.log` | Compresses file without deleting original |
+| Decompress keep archive | `gzip -dk [file.gz]` | `gzip -dk access.log.gz` | Restores original file, keeps `.gz` archive |
+| Fast compression | `gzip -1 [file]` | `gzip -1k backup.sql` | Minimum compression time, larger output |
+| Maximum compression | `gzip -9 [file]` | `gzip -9k backup.sql` | Best compression ratio, higher CPU usage |
+| Test archive integrity | `gzip -t [file.gz]` | `gzip -tv archive.tar.gz` | Verifies internal CRC32 checksums |
+| Inspect metrics | `gzip -l [file.gz]` | `gzip -l access.log.gz` | Displays uncompressed size and savings ratio |
+| Stream stdout | `gzip -c [file] > [out.gz]` | `gzip -c file.txt > file.txt.gz` | Safe stream output leaving source untouched |
+
+### 4.2 Compressing Files while Retaining Originals (`-k`)
 
 Compress a file with progress reporting while ensuring the original source file is preserved:
 
+```bash
+gzip -kv access.log
+```
+
+Output:
+
 ```console
-$ gzip -kv access.log
 access.log:	 84.2% -- replaced with access.log.gz
 ```
 
 Verify that both files remain present:
 
+```bash
+ls -lh access.log*
+```
+
+Output:
+
 ```console
-$ ls -lh access.log*
 -rw-r--r-- 1 user user 100M Sep 12 18:00 access.log
 -rw-r--r-- 1 user user  16M Sep 12 18:00 access.log.gz
 ```
 
-### 4.2 Decompressing Files
+### 4.3 Decompressing Files
 
 Decompress an archive, restoring the original uncompressed file:
 
@@ -107,12 +131,17 @@ gzip -d -k access.log.gz
 gunzip -k access.log.gz
 ```
 
-### 4.3 Inspecting Archive Metrics with `-l`
+### 4.4 Inspecting Archive Metrics with `-l`
 
 Query compressed size, uncompressed size, and space savings without decompressing:
 
+```bash
+gzip -l access.log.gz
+```
+
+Output:
+
 ```console
-$ gzip -l access.log.gz
          compressed        uncompressed  ratio uncompressed_name
            16580412           104857600  84.2% access.log
 ```
@@ -125,8 +154,13 @@ $ gzip -l access.log.gz
 
 Validate that a compressed file is not corrupted or truncated before removing external backups:
 
+```bash
+gzip -tv access.log.gz
+```
+
+Output:
+
 ```console
-$ gzip -tv access.log.gz
 access.log.gz:	 OK
 ```
 
@@ -225,13 +259,13 @@ pigz -k -9 huge_disk_dump.raw
 
 ### 8.1 In-Place Deletion Hazard
 
-The most common operational mistake with `gzip` is forgetting that source files are automatically unlinked upon compression. If an administrator compresses an actively written log file with `gzip access.log`, the active file descriptor continues writing to the unlinked inode until restarted, causing apparent log loss.
-- Always pass `-k` (`--keep`) to preserve input files.
-- Alternatively, redirect via `gzip -c input > output.gz`.
+> [!WARNING]
+> **In-Place Source Deletion**: By default, `gzip` deletes the uncompressed source file upon successful compression, and deletes the `.gz` archive upon decompression. Always pass `-k` (`--keep`) or stream with `-c` to preserve input files.
 
 ### 8.2 Denial of Service via "Zip Bombs"
 
-Recursive compression or highly repetitive byte sequences can compress a 100 GB file down to a few megabytes. Extracting untrusted archives without checking `gzip -l` can exhaust target disk partitions.
+> [!CAUTION]
+> **Denial of Service via Zip Bombs**: Highly repetitive byte sequences can compress gigabytes of data into small megabyte archives. Check uncompressed dimensions using `gzip -l` before unpacking untrusted archives.
 
 ### 8.3 Portability Constraints
 
@@ -243,9 +277,15 @@ Recursive compression or highly repetitive byte sequences can compress a 100 GB 
 
 ### 9.1 Always Supply `-k` (`--keep`) in Production Scripts
 
+> [!TIP]
+> **Always Supply `-k` (`--keep`) in Production Scripts**: Preserving input files until external backup integrity verification succeeds prevents catastrophic data loss if subsequent tasks fail.
+
 *Upstream Rationale*: `gzip(1)` explicitly defines destructive source deletion as standard default behavior. In automated scripts, unlinking source files before verifying backup integrity invites data loss. Always specify `-k` to retain the source until external verification succeeds.
 
 ### 9.2 Always Validate with `-t` Before Deleting Source Data
+
+> [!IMPORTANT]
+> **Always Validate with `-t` Before Removing Originals**: Run `gzip -t <file>.gz` to calculate and verify internal CRC32 checksums before cleaning up original uncompressed data.
 
 *Upstream Rationale*: Silent disk write failures or network interruptions during streaming can produce truncated `.gz` archives. Running `gzip -t <file>.gz` calculates and verifies the internal CRC32 checksum before original files are removed.
 
