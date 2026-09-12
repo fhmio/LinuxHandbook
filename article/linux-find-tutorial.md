@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: GNU Findutils 4.10 | **POSIX**: POSIX.1-2024 (with GNU extensions) | **Safety Tier**: safe-read-only | **Scope**: filesystem-search
+
 `find` searches directory trees recursively, evaluating boolean expressions composed of tests, actions, and global options against each visited file and directory.
 
 - **Upstream Project & Provenance**: Developed and maintained under **GNU Findutils** (`findutils`).
@@ -78,13 +80,25 @@ find [-H] [-L] [-P] [-D debugopts] [-Olevel] [starting-point...] [expression]
 
 ## 4. Basic Usage
 
-### 4.1 Finding Files by Name
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Find files by name | `find /path -name "*.log"` | Case-sensitive pattern match |
+| Find files ignoring case | `find /path -iname "*.conf"` | Case-insensitive pattern match |
+| Find regular files only | `find /path -type f` | Excludes directories, symlinks, sockets |
+| Find directories only | `find /path -type d` | Recursively finds subdirectories |
+| Find files modified in last 7 days | `find /path -type f -mtime -7` | Relative time in 24-hour periods |
+| Find files larger than 100MB | `find /path -type f -size +100M` | Searches by exact byte or unit threshold |
+| Batch execute safely | `find /path -type f -name "*.tmp" -print0 \| xargs -0 rm -f` | Null-delimited pipeline safe against special characters |
+
+### 4.2 Finding Files by Name
 
 ```bash
 find /etc -name "*.conf"
 ```
 
-### 4.2 Finding Directories Only
+### 4.3 Finding Directories Only
 
 ```bash
 find /var/log -type d
@@ -164,16 +178,12 @@ find . \( -name ".git" -o -name "node_modules" \) -prune -o -type f -name "*.js"
 
 ### 8.1 The Catastrophic `-delete` Precedence Bug
 
-- **Hazard**: Placing `-delete` before filtering predicates:
-  ```bash
-  # DISASTROUS BUG: Deletes everything first!
-  find /var/tmp -delete -name "*.log"
-  ```
-  Because `find` evaluates left-to-right, `-delete` executes immediately for every visited file.
-- **Rule**: Always place `-delete` as the **last** action in the expression:
-  ```bash
-  find /var/tmp -type f -name "*.log" -delete
-  ```
+> [!CAUTION]
+> **Catastrophic `-delete` Order Hazard**: `find` processes predicates sequentially from left to right using short-circuit evaluation. Putting `-delete` before filter criteria (e.g., `find /var/tmp -delete -name "*.log"`) evaluates `-delete` on **every file first**, wiping out the entire directory!
+> Always place `-delete` as the final action:
+> ```bash
+> find /var/tmp -type f -name "*.log" -delete
+> ```
 
 ---
 
