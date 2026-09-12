@@ -1,0 +1,156 @@
+[
+  {
+    "command": "sftp",
+    "article_filename": "article/linux-sftp-tutorial.md",
+    "upstream_suite": "openssh",
+    "upstream_package": "openssh-clients",
+    "upstream_homepage": "https://www.openssh.org/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man.openbsd.org/sftp",
+      "source_repo_url": "https://github.com/openssh/openssh-portable/blob/master/sftp.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "OpenSSH 10.5",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "ssh",
+    "article_filename": "article/linux-ssh-tutorial.md",
+    "upstream_suite": "openssh",
+    "upstream_package": "openssh-clients",
+    "upstream_homepage": "https://www.openssh.org/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man.openbsd.org/ssh",
+      "source_repo_url": "https://github.com/openssh/openssh-portable/blob/master/ssh.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "OpenSSH 10.5",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "scp",
+    "article_filename": "article/linux-scp-tutorial.md",
+    "upstream_suite": "openssh",
+    "upstream_package": "openssh-clients",
+    "upstream_homepage": "https://www.openssh.org/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man.openbsd.org/scp",
+      "source_repo_url": "https://github.com/openssh/openssh-portable/blob/master/scp.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "OpenSSH 10.5",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "ssh-keygen",
+    "article_filename": "article/linux-ssh-keygen-tutorial.md",
+    "upstream_suite": "openssh",
+    "upstream_package": "openssh-clients",
+    "upstream_homepage": "https://www.openssh.org/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man.openbsd.org/ssh-keygen",
+      "source_repo_url": "https://github.com/openssh/openssh-portable/blob/master/ssh-keygen.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "OpenSSH 10.5",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "ssh-agent",
+    "article_filename": "article/linux-ssh-agent-tutorial.md",
+    "upstream_suite": "openssh",
+    "upstream_package": "openssh-clients",
+    "upstream_homepage": "https://www.openssh.org/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man.openbsd.org/ssh-agent",
+      "source_repo_url": "https://github.com/openssh/openssh-portable/blob/master/ssh-agent.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "OpenSSH 10.5",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "ssh-add",
+    "article_filename": "article/linux-ssh-add-tutorial.md",
+    "upstream_suite": "openssh",
+    "upstream_package": "openssh-clients",
+    "upstream_homepage": "https://www.openssh.org/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man.openbsd.org/ssh-add",
+      "source_repo_url": "https://github.com/openssh/openssh-portable/blob/master/ssh-add.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "OpenSSH 10.5",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "ssh-keyscan",
+    "article_filename": "article/linux-ssh-keyscan-tutorial.md",
+    "upstream_suite": "openssh",
+    "upstream_package": "openssh-clients",
+    "upstream_homepage": "https://www.openssh.org/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man.openbsd.org/ssh-keyscan",
+      "source_repo_url": "https://github.com/openssh/openssh-portable/blob/master/ssh-keyscan.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "OpenSSH 10.5",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  }
+]
