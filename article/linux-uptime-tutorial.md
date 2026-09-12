@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: procps-ng 4.0.4 | **POSIX**: De-facto Standard (Not POSIX standardized) | **Safety Tier**: safe-read-only | **Scope**: system-uptime-inspection
+
 `uptime` displays how long the system has been running, the current system time, the number of currently logged in users, and the system load averages for the past 1, 5, and 15 minutes.
 
 - **Upstream Project & Provenance**: Maintained within **procps-ng** (`procps-ng`). An alternative implementation is also provided by GNU Coreutils.
@@ -63,7 +65,17 @@ uptime [options]
 
 ## 4. Basic Usage
 
-### 4.1 Standard Output
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Standard system uptime | `uptime` | Shows running time, user count, load averages |
+| Human-friendly duration | `uptime -p` | Displays "up 2 weeks, 3 days, 1 hour" |
+| Exact boot timestamp | `uptime -s` | Outputs `YYYY-MM-DD HH:MM:SS` boot time |
+| Direct seconds from kernel | `cat /proc/uptime` | Raw seconds since system startup |
+| Core count comparison | `uptime && nproc` | Evaluates load against physical/logical cores |
+
+### 4.2 Standard Output
 
 ```bash
 uptime
@@ -72,7 +84,7 @@ uptime
  11:45:00 up 14 days,  4:12,  2 users,  load average: 0.15, 0.22, 0.18
 ```
 
-### 4.2 Pretty Formatting (`-p`)
+### 4.3 Pretty Formatting (`-p`)
 
 ```bash
 uptime -p
@@ -98,6 +110,9 @@ uptime -s
 - **Technical Analysis**: Highly valuable in automated post-mortem root-cause analysis after unexpected reboots.
 
 ### 5.2 Deciphering Linux Load Averages
+
+> [!NOTE]
+> **Understanding Linux Load Average**: Unlike BSD systems which only count CPU-runnable processes (`R` state), Linux load averages also include tasks in uninterruptible disk I/O wait (`D` state). A high load average paired with low CPU utilization typically signifies storage bottlenecks or hung network mounts.
 
 The three load average figures represent the **exponentially damped moving average** of the system load over 1, 5, and 15 minutes:
 - On Linux, "load" includes processes actively running (`R` state) **plus** processes waiting for uninterruptible disk I/O (`D` state).
@@ -138,6 +153,9 @@ cat /proc/uptime
 ## 8. Safety, Security, and Portability
 
 ### 8.1 procps-ng vs GNU Coreutils Implementation Differences
+
+> [!IMPORTANT]
+> Linux systems may provide `uptime` via either **procps-ng** or **GNU Coreutils**. The convenient flags `-p` (`--pretty`) and `-s` (`--since`) are procps-ng enhancements; minimal environments (like Alpine or embedded BusyBox) may not support these flags.
 
 - **procps-ng `uptime`**: Supports `-p` (`--pretty`) and `-s` (`--since`).
 - **GNU Coreutils `uptime`**: Standard minimal tool that historically lacked `-p` and `-s`.
