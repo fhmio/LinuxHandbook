@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `OpenSSH 10.5` | **POSIX**: `De facto standard (IETF draft-ietf-secsh-filexfer)` | **Safety Tier**: `unprivileged-filesystem-write` | **Scope**: `Interactive & batch secure file transfer`
+
 `sftp` is the interactive and automated file transfer client provided by the **OpenSSH** suite. It provides secure file access, file transfer, and file system management over an encrypted SSH transport layer (typically utilizing the `sftp-server` subsystem).
 
 - **Upstream Project & Provenance**: Developed under the OpenBSD and OpenSSH portable projects (`openssh-clients`).
@@ -113,13 +115,28 @@ All documented flags for `sftp` in OpenSSH 10.5 are categorized below with expli
 
 ## 4. Basic Usage
 
-### 4.1 Minimal Connection and Version Check
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Connect interactively | `sftp remoteuser@192.168.1.50` | Opens interactive `sftp>` prompt |
+| Connect on custom port | `sftp -P 2222 remoteuser@192.168.1.50` | `-P` sets destination port |
+| Use private key identity | `sftp -i ~/.ssh/id_ed25519 remoteuser@192.168.1.50` | `-i` selects authentication key |
+| Connect via jump bastion | `sftp -J jumpuser@bastion.example.com remoteuser@10.0.10.25` | `-J` routes through jump proxy |
+| Execute batch script | `sftp -b commands.batch remoteuser@192.168.1.50` | `-b` runs non-interactive commands |
+| Bandwidth rate limiting | `sftp -l 5000 remoteuser@192.168.1.50` | `-l` caps egress bandwidth to 5000 Kbit/s |
+| Verbose diagnostic debug | `sftp -v remoteuser@192.168.1.50` | `-v` prints SSH connection logs |
+
+### 4.2 Minimal Connection and Version Check
 
 To connect to a remote host using default credentials and key agent:
 
 ```bash
 sftp remoteuser@192.168.1.50
 ```
+
+*Sample terminal output:*
+
 ```console
 Connected to 192.168.1.50.
 sftp>
@@ -130,6 +147,9 @@ To display client version and protocol diagnostic information:
 ```bash
 sftp -v remoteuser@192.168.1.50
 ```
+
+*Sample terminal output:*
+
 ```text
 OpenSSH_10.5, OpenSSL 3.3.1
 debug1: Connecting to 192.168.1.50 [192.168.1.50] port 22.
@@ -140,11 +160,17 @@ debug1: Sending subsystem: sftp
 sftp>
 ```
 
-### 4.2 Interactive Directory Inspection
+### 4.3 Interactive Directory Inspection
 
-Once inside the `sftp>` shell:
+Once inside the interactive `sftp>` shell, navigate and inspect files on both local and remote systems:
 
 ```bash
+sftp remoteuser@192.168.1.50
+```
+
+*Interactive session commands:*
+
+```text
 sftp> pwd
 Remote working directory: /home/remoteuser
 
@@ -170,29 +196,37 @@ total 12
 To upload an entire directory hierarchy while preserving timestamps and permissions:
 
 ```bash
-sftp -p -r remoteuser@192.168.1.50
+echo "put -r ./build_artifacts /var/www/html/release" | sftp -b - -p remoteuser@192.168.1.50
 ```
-```console
+
+*Sample terminal output:*
+
+```text
 sftp> put -r ./build_artifacts /var/www/html/release
 Uploading ./build_artifacts/ to /var/www/html/release
 Entering ./build_artifacts/
 ./build_artifacts/app.bin              100%   14MB   4.8MB/s   00:02
 ./build_artifacts/index.html           100%  4096    1.2MB/s   00:00
 ```
+
 - **Technical Analysis**: The `-r` flag causes `sftp` to traverse local directories recursively and issue remote `mkdir` requests as needed before streaming file blocks.
 
 ### 5.2 Resuming an Interrupted Large Download
 
-If a network disconnection terminates a 10 GB disk image transfer:
+If a network disconnection terminates a 10 GB disk image transfer, resume it cleanly using `reget`:
 
 ```bash
-sftp remoteuser@192.168.1.50
+echo "reget /data/backups/disk.img ./disk.img" | sftp -b - remoteuser@192.168.1.50
 ```
-```console
+
+*Sample terminal output:*
+
+```text
 sftp> reget /data/backups/disk.img ./disk.img
 Resuming /data/backups/disk.img to ./disk.img
 ./disk.img                            100% 10240MB   45.2MB/s   01:12
 ```
+
 - **Technical Analysis**: `reget` queries the local file size (`stat`) and issues SFTP read requests with an offset starting at the current local byte count, appending rather than truncating.
 
 ### 5.3 Automated Non-Interactive Batch Scripting
@@ -200,6 +234,7 @@ Resuming /data/backups/disk.img to ./disk.img
 To execute unattended backups without human intervention:
 
 Create a batch control file `transfer.batch`:
+
 ```text
 cd /var/log/remote_app
 lcd /backups/incoming
@@ -209,9 +244,13 @@ bye
 ```
 
 Invoke `sftp` in batch mode:
+
 ```bash
 sftp -b transfer.batch -i /home/deploy/.ssh/id_ed25519 deploy@backup.internal.lan
 ```
+
+*Sample terminal output:*
+
 ```text
 sftp> cd /var/log/remote_app
 sftp> lcd /backups/incoming
@@ -229,6 +268,9 @@ Transferring files to an internal server isolated behind an edge jump host, thro
 ```bash
 sftp -J jumpuser@bastion.example.com:2222 -l 5000 internaluser@10.0.10.25
 ```
+
+*Sample terminal output:*
+
 ```console
 Connected to 10.0.10.25 via jump host bastion.example.com.
 sftp> put large_database.dump
@@ -252,6 +294,15 @@ bye
 EOF
 ```
 
+*Sample terminal output:*
+
+```text
+sftp> -mkdir incoming_uploads
+sftp> cd incoming_uploads
+sftp> put /opt/data/metrics-*.parquet
+sftp> bye
+```
+
 - Notice the leading `-` on `-mkdir incoming_uploads`: In batch mode, `sftp` immediately exits upon any command error. Prefixing a command with `-` tells `sftp` to ignore failure (e.g., if the directory already exists) and proceed with subsequent commands.
 
 ### 6.2 Advanced Transfer Tuning via OpenSSH 8.4+ `-X` Options
@@ -269,7 +320,13 @@ sftp -X nrequests=128 -X buffer=65536 -B 65536 -R 128 user@fast-node.local
 
 `sftp` supports the `df` protocol extension to check remote filesystem storage without requiring an interactive SSH shell allocation:
 
-```console
+```bash
+echo "df -h /var/log" | sftp -b - remoteuser@192.168.1.50
+```
+
+*Sample terminal output:*
+
+```text
 sftp> df -h /var/log
         Size         Used        Avail       (root)    %Capacity
     49.1 GiB     12.3 GiB     34.3 GiB     36.8 GiB          25%
@@ -311,17 +368,24 @@ Permissions on `~/.ssh/config` and identity key files must strictly be `0600` (r
 
 ### 8.1 Data Loss Hazards and Resumed Transfer Risks
 
-- **Mismatched Source Corruption**: The OpenSSH team explicitly warns that resuming transfers with `reget` or `reput` relies strictly on local and remote byte counts. If the existing partial file does not correspond precisely to the source file (e.g., if the remote file was updated or modified between transfer attempts), appending will corrupt the target file. Always verify cryptographic checksums (`sha256sum`) after resuming transfers.
-- **Recursive Directory Overwrites**: `put -r` silently overwrites files of identical names in destination directories without interactive prompting.
+> [!WARNING]
+> **Mismatched Source Corruption Risk**: Resuming transfers with `reget` or `reput` relies strictly on local and remote byte counts. If the existing partial file does not correspond precisely to the source file (e.g., if the remote file was updated or modified between transfer attempts), appending will corrupt the target file. Always verify cryptographic checksums (`sha256sum`) after resuming transfers.
+
+> [!CAUTION]
+> **Recursive Directory Overwrites**: `put -r` silently overwrites files of identical names in destination directories without interactive prompting.
 
 ### 8.2 Security Boundaries and Privilege Separation
 
+> [!IMPORTANT]
+> **Batch Mode Key Authentication Requirement**: Non-interactive batch jobs (`-b`) connecting to unknown hosts will abort if `StrictHostKeyChecking=yes` or `ask` is configured and the host key is not present in `~/.ssh/known_hosts`. Batch jobs cannot prompt for passwords from a non-interactive TTY.
+
 - `sftp` does not require root privileges on the client or server. When configuring a remote server for SFTP access only, administrators should configure `ChrootDirectory` and `ForceCommand internal-sftp` in `sshd_config` to prevent shell access outside the assigned jail.
-- **Host Key Checking**: Non-interactive batch jobs (`-b`) connecting to unknown hosts will abort if `StrictHostKeyChecking=yes` or `ask` is configured and the host key is not present in `~/.ssh/known_hosts`.
 
 ### 8.3 Portability & Standards
 
-- While `sftp` syntax is consistent across Linux distributions (Debian, RHEL, Arch, Alpine), macOS, and BSD systems using OpenSSH, non-OpenSSH SFTP implementations (such as commercial SSH Tectia or PuTTY's `psftp`) have differing command-line options.
+> [!NOTE]
+> While `sftp` syntax is consistent across Linux distributions (Debian, RHEL, Arch, Alpine), macOS, and BSD systems using OpenSSH, non-OpenSSH SFTP implementations (such as commercial SSH Tectia or PuTTY's `psftp`) have differing command-line options.
+
 - The underlying SFTP protocol version negotiated between client and server is typically Version 3. Some advanced features (such as `df` or POSIX rename extensions) depend on server-side support.
 
 ---
@@ -331,20 +395,29 @@ Permissions on `~/.ssh/config` and identity key files must strictly be `0600` (r
 Every best practice below is substantiated by official OpenSSH documentation and security advisories:
 
 1. **Mandate Key Authentication for Automated Batch Transfers**:
-   - *Guidance*: Always use dedicated, unprivileged SSH key pairs (preferably Ed25519) with `-i` or `ssh-agent` when running `-b` batch transfers.
-   - *Authoritative Justification*: OpenSSH documentation confirms that batch mode disables interactive password prompts; attempting password auth without `SSH_ASKPASS` triggers immediate connection failure (exit code 255).
+   > [!IMPORTANT]
+   > *Guidance*: Always use dedicated, unprivileged SSH key pairs (preferably Ed25519) with `-i` or `ssh-agent` when running `-b` batch transfers.
+   > *Authoritative Justification*: OpenSSH documentation confirms that batch mode disables interactive password prompts; attempting password auth without `SSH_ASKPASS` triggers immediate connection failure (exit code 255).
+
 2. **Verify File Integrity After Resuming Interrupted Downloads**:
-   - *Guidance*: Never rely solely on `reget` success for mission-critical transfers; run a hash verification (`sha256sum`) against the source file.
-   - *Authoritative Justification*: OpenSSH manual states that `reget` assumes the partial file is an exact prefix of the remote file and does not validate historical chunk integrity.
+   > [!WARNING]
+   > *Guidance*: Never rely solely on `reget` success for mission-critical transfers; run a hash verification (`sha256sum`) against the source file.
+   > *Authoritative Justification*: OpenSSH manual states that `reget` assumes the partial file is an exact prefix of the remote file and does not validate historical chunk integrity.
+
 3. **Prefix Idempotent Commands in Batch Scripts with `-`**:
-   - *Guidance*: Prefix creation commands like `mkdir` with `-` (e.g. `-mkdir /remote/dir`) inside batch files.
-   - *Authoritative Justification*: Upstream documentation notes that `sftp` terminates batch execution on the first command error; the `-` prefix suppresses termination for expected non-fatal conditions.
+   > [!TIP]
+   > *Guidance*: Prefix creation commands like `mkdir` with `-` (e.g. `-mkdir /remote/dir`) inside batch files.
+   > *Authoritative Justification*: Upstream documentation notes that `sftp` terminates batch execution on the first command error; the `-` prefix suppresses termination for expected non-fatal conditions.
+
 4. **Use Bandwidth Throttling on Production Egress Links**:
-   - *Guidance*: Specify `-l <kbit/s>` when transferring large archives across production WANs.
-   - *Authoritative Justification*: Prevents TCP starvation on co-located network interfaces.
+   > [!TIP]
+   > *Guidance*: Specify `-l <kbit/s>` when transferring large archives across production WANs.
+   > *Authoritative Justification*: Prevents TCP starvation on co-located network interfaces.
+
 5. **Use ProxyJump (`-J`) Instead of Agent Forwarding (`-A`) Across Intermediate Bastions**:
-   - *Guidance*: Use `-J bastion.example.com` rather than `-A` agent forwarding when accessing internal nodes.
-   - *Authoritative Justification*: OpenSSH security guidance warns that agent forwarding exposes the local authentication socket to root users on intermediate systems.
+   > [!IMPORTANT]
+   > *Guidance*: Use `-J bastion.example.com` rather than `-A` agent forwarding when accessing internal nodes.
+   > *Authoritative Justification*: OpenSSH security guidance warns that agent forwarding exposes the local authentication socket to root users on intermediate systems.
 
 ---
 
