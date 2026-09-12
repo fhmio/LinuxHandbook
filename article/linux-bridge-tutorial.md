@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: iproute2 (iproute2 6.13) | **POSIX**: Linux-Specific (iproute2 extension) | **Safety Tier**: privileged-network-state-altering | **Scope**: ethernet-bridge-management
+
 `bridge` is the dedicated command-line utility for configuring and inspecting Linux Ethernet bridge devices, member port attributes, the Forwarding Database (FDB), VLAN filtering tables, and the Multicast Database (MDB).
 
 - **Upstream Project & Provenance**: Maintained within **iproute2** (`iproute2`) alongside `ip` and `tc`.
@@ -73,30 +75,58 @@ bridge [OPTIONS] OBJECT { COMMAND | help }
 
 ## 4. Basic Usage
 
-### 4.1 Inspecting Bridge Member Ports
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Inspect bridge ports | `bridge link show` | `bridge link show` | Displays all member ports attached to bridges |
+| Detailed port parameters | `bridge -d link show [dev]` | `bridge -d link show dev eth1` | Shows STP, hairpin, guard, and flood flags |
+| Forwarding database (FDB) | `bridge fdb show` | `bridge fdb show` | Lists learned and static MAC mappings |
+| Add static MAC mapping | `bridge fdb add [mac] dev [port] master static` | `sudo bridge fdb add 00:11:22:33:44:55 dev veth0 master static` | Prevents MAC spoofing on virtual ports |
+| Inspect VLAN filtering | `bridge vlan show` | `bridge vlan show` | Lists per-port 802.1Q VLAN memberships |
+| Add access VLAN | `bridge vlan add dev [port] vid [id] pvid untagged` | `sudo bridge vlan add dev veth0 vid 100 pvid untagged` | Sets untagged PVID on bridge port |
+| Multicast snooping (MDB) | `bridge mdb show` | `bridge mdb show` | Audits IGMP/MLD multicast group memberships |
+| Monitor bridge events | `bridge monitor all` | `bridge monitor all` | Streams live Netlink Layer 2 state changes |
+
+### 4.2 Inspecting Bridge Member Ports
 
 Display all network interfaces attached as ports to bridges:
 
+```bash
+bridge link show
+```
+
+Output:
+
 ```console
-$ bridge link show
 2: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 master br0 state forwarding priority 32 cost 4 
 3: veth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 master br0 state forwarding priority 32 cost 2 
 ```
 
 View comprehensive port parameters and hardware flags:
 
+```bash
+bridge -d link show dev eth1
+```
+
+Output:
+
 ```console
-$ bridge -d link show dev eth1
 2: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 master br0 state forwarding priority 32 cost 4 
     hairpin off guard off root_block off fastleave off learning on flood on mcast_flood on bcast_flood on 
 ```
 
-### 4.2 Inspecting the Forwarding Database (FDB)
+### 4.3 Inspecting the Forwarding Database (FDB)
 
 List learned and static MAC address mappings:
 
+```bash
+bridge fdb show
+```
+
+Output:
+
 ```console
-$ bridge fdb show
 52:54:00:12:34:56 dev eth1 master br0 permanent
 52:54:00:98:76:54 dev eth1 master br0
 02:42:0a:00:00:02 dev veth0 master br0
@@ -117,8 +147,13 @@ sudo bridge fdb add 00:11:22:33:44:55 dev veth0 master static
 
 Verify entry addition:
 
+```bash
+bridge fdb show dev veth0
+```
+
+Output:
+
 ```console
-$ bridge fdb show dev veth0
 00:11:22:33:44:55 dev veth0 master br0 static
 ```
 
@@ -149,8 +184,13 @@ Modern Linux bridges support hardware-style 802.1Q VLAN filtering:
    ```
 
 4. **Inspect the VLAN table**:
+   ```bash
+   bridge vlan show
+   ```
+
+   Output:
+
    ```console
-   $ bridge vlan show
    port              vlan-id  
    br0               1 PVID untagged
    eth1              1 PVID untagged
@@ -178,8 +218,13 @@ sudo bridge link set dev veth0 flood off
 
 Inspect active IGMP/MLD multicast group subscriptions registered on the bridge:
 
+```bash
+bridge mdb show
+```
+
+Output:
+
 ```console
-$ bridge mdb show
 dev br0 port eth1 grp 239.255.255.250 temp
 dev br0 port veth0 grp 224.0.0.251 permanent
 ```
@@ -192,8 +237,13 @@ dev br0 port veth0 grp 224.0.0.251 permanent
 
 Combine `-j` and `-p` to export Layer 2 forwarding topologies into JSON:
 
-```console
-$ bridge -j -p fdb show dev veth0
+```bash
+bridge -j -p fdb show dev veth0
+```
+
+Output:
+
+```json
 [
   {
     "mac": "00:11:22:33:44:55",
@@ -216,8 +266,13 @@ bridge -j fdb show | jq -r '.[] | select(.flags[]? == "static") | "\(.mac) on \(
 
 Monitor real-time Layer 2 topology transitions, MAC migrations, and STP state changes:
 
+```bash
+bridge monitor all
+```
+
+Output:
+
 ```console
-$ bridge monitor all
 [FDB] 52:54:00:ab:cd:ef dev veth0 master br0
 [LINK] 3: veth0: state disabled priority 32 cost 2 
 [LINK] 3: veth0: state learning priority 32 cost 2 
@@ -272,7 +327,8 @@ rm /tmp/bridge_vlans.batch
 
 ### 8.1 Layer 2 Loop Hazards
 
-Connecting multiple physical links to a bridge without Spanning Tree Protocol (STP) enabled (`sudo ip link set dev br0 type bridge stp_state 1`) can induce catastrophic broadcast storms, saturating network switches and exhausting host CPU resources.
+> [!CAUTION]
+> **Broadcast Storm Risk**: Connecting multiple physical links to a bridge without Spanning Tree Protocol (STP) enabled (`sudo ip link set dev br0 type bridge stp_state 1`) can induce catastrophic Layer 2 loops and broadcast storms, saturating switch links and locking host CPUs.
 
 ### 8.2 Privilege Boundaries
 
@@ -288,13 +344,22 @@ Modifying FDB tables, link states, or VLAN assignments requires `CAP_NET_ADMIN` 
 
 ### 9.1 Cease Using Deprecated `brctl`
 
+> [!IMPORTANT]
+> **Cease Using Deprecated `brctl`**: `brctl` from `bridge-utils` is unmaintained and relies on legacy `ioctl` calls that cannot configure VLAN filtering, FDB offloads, or multicast snooping. Use `bridge` and `ip link`.
+
 *Upstream Rationale*: `brctl` (from `bridge-utils`) is unmaintained and communicates via legacy `ioctl` calls that cannot configure modern Linux kernel bridge features such as VLAN filtering, FDB offloads, or multicast snooping. All modern deployments must use `bridge` and `ip link`.
 
 ### 9.2 Enable `vlan_filtering` on Multi-Tenant Virtual Bridges
 
+> [!TIP]
+> Setting `vlan_filtering 1` on the bridge master enforces IEEE 802.1Q boundary isolation between virtual machines and containers directly in the kernel fast path.
+
 *Upstream Rationale*: By default, Linux bridges behave as simple unmanaged hubs where all ports share a single broadcast domain. Setting `vlan_filtering 1` enforces IEEE 802.1Q boundary isolation between virtual machines and containers directly in the kernel fast path.
 
 ### 9.3 Use BPDU Guard (`guard on`) on Virtual Machine Ports
+
+> [!NOTE]
+> Enabling `guard on` (BPDU guard) automatically disables virtual ports if unauthorized Spanning Tree BPDUs arrive from rogue VMs or containers.
 
 *Upstream Rationale*: If a virtual machine or container running on a virtual bridge transmits rogue Spanning Tree BPDUs, it can alter the physical switch network's root bridge topology. Enabling `guard on` automatically disables the port if a BPDU frame is detected.
 
