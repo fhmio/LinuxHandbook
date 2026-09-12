@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: iproute2 (iproute2 6.13) | **POSIX**: Linux-Specific (iproute2 extension) | **Safety Tier**: safe-read-only | **Scope**: socket-inspection
+
 `ss` (Socket Statistics) is a high-performance utility for inspecting active network sockets, listening ports, protocol statistics, and connection metadata. It extracts socket diagnostic information directly from the Linux kernel via the `sock_diag` Netlink subsystem.
 
 - **Upstream Project & Provenance**: Maintained within **iproute2** (`iproute2`).
@@ -85,12 +87,30 @@ Legacy tools like `netstat` read socket data by sequentially scanning `/proc/net
 
 ## 4. Basic Usage
 
-### 4.1 System Socket Summary
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Socket summary | `ss -s` | `ss -s` | High-level overview of active and closed sockets |
+| Active listening ports | `ss -tulpn` | `sudo ss -tulpn` | Numeric TCP/UDP listeners with PID attribution |
+| Established connections | `ss -tan state established` | `ss -tan state established` | Shows active established TCP sessions |
+| Filter by port | `ss -tan '( sport = :[port] )'` | `ss -tan '( sport = :ssh or dport = :ssh )'` | Targeted port matching via filter expressions |
+| Filter by destination CIDR | `ss -tan dst [cidr]` | `ss -tan dst 192.168.1.0/24` | Filters connections by target subnet |
+| Diagnostic TCP metrics | `ss -ti dst [ip]` | `ss -ti dst 93.184.216.34` | Detailed RTT, cwnd, and retransmission stats |
+| Unix domain sockets | `ss -x -a` | `ss -x -a` | Inspects local inter-process IPC sockets |
+| Count TIME-WAIT sockets | `ss -H -tan state time-wait \| wc -l` | `ss -H -tan state time-wait \| wc -l` | Efficient state tally without headers |
+
+### 4.2 System Socket Summary
 
 Retrieve a high-level statistical overview of all active sockets across protocols:
 
+```bash
+ss -s
+```
+
+Output:
+
 ```console
-$ ss -s
 Total: 345
 TCP:   38 (estab 14, closed 12, orphaned 0, timewait 6)
 
@@ -102,12 +122,17 @@ INET	  36        24        12
 FRAG	  0         0         0        
 ```
 
-### 4.2 Listing Active Listening Ports
+### 4.3 Listing Active Listening Ports
 
 Audit all listening TCP and UDP sockets with numeric addresses and process attribution:
 
+```bash
+sudo ss -tulpn
+```
+
+Output:
+
 ```console
-$ sudo ss -tulpn
 Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess                                     
 udp   UNCONN 0      0            0.0.0.0:5353       0.0.0.0:*    users:(("avahi-daemon",pid=612,fd=12))      
 udp   UNCONN 0      0            0.0.0.0:68         0.0.0.0:*    users:(("systemd-network",pid=498,fd=19))   
@@ -124,8 +149,13 @@ tcp   LISTEN 0      128             [::]:22            [::]:*    users:(("sshd",
 
 Filter for active, connected TCP sessions without displaying passive listeners:
 
+```bash
+ss -tan state established
+```
+
+Output:
+
 ```console
-$ ss -tan state established
 Recv-Q Send-Q  Local Address:Port   Peer Address:Port
 0      0       192.168.1.50:22      192.168.1.10:54210
 0      64      192.168.1.50:22      192.168.1.12:51884
@@ -136,8 +166,13 @@ Recv-Q Send-Q  Local Address:Port   Peer Address:Port
 
 Filter sockets by source or destination port using `ss` filter expressions:
 
+```bash
+ss -tan '( sport = :ssh or dport = :ssh )'
+```
+
+Output:
+
 ```console
-$ ss -tan '( sport = :ssh or dport = :ssh )'
 State       Recv-Q Send-Q Local Address:Port  Peer Address:Port
 ESTAB       0      0      192.168.1.50:22     192.168.1.10:54210
 ESTAB       0      64     192.168.1.50:22     192.168.1.12:51884
@@ -145,8 +180,13 @@ ESTAB       0      64     192.168.1.50:22     192.168.1.12:51884
 
 Filter by destination IP subnet:
 
+```bash
+ss -tan dst 192.168.1.0/24
+```
+
+Output:
+
 ```console
-$ ss -tan dst 192.168.1.0/24
 State       Recv-Q Send-Q Local Address:Port  Peer Address:Port
 ESTAB       0      0      192.168.1.50:22     192.168.1.10:54210
 ```
@@ -155,12 +195,18 @@ ESTAB       0      0      192.168.1.50:22     192.168.1.10:54210
 
 Inspect internal kernel TCP metrics such as Round-Trip Time (RTT), congestion window (`cwnd`), and Maximum Segment Size (`mss`):
 
+```bash
+ss -ti dst 93.184.216.34
+```
+
+Output:
+
 ```console
-$ ss -ti dst 93.184.216.34
 State Recv-Q Send-Q Local Address:Port  Peer Address:Port
 ESTAB 0      0      192.168.1.50:48922  93.184.216.34:443
 	 cubic wscale:7,7 rto:240 rtt:32.415/4.120 ato:40 mss:1460 rcvspace:64240 ssthresh:10 cwnd:10
 ```
+
 *Metrics analysis*:
 - `rtt:32.415/4.120`: Mean RTT of 32.415 ms with 4.120 ms variance.
 - `cwnd:10`: Active congestion window sizing in segments.
@@ -170,8 +216,13 @@ ESTAB 0      0      192.168.1.50:48922  93.184.216.34:443
 
 Inspect local inter-process communication (IPC) sockets:
 
+```bash
+ss -x -a
+```
+
+Output:
+
 ```console
-$ ss -x -a
 Netid State  Recv-Q Send-Q Local Address:Port             Peer Address:Port
 u_str LISTEN 0      4096   /run/systemd/private           14892             * 0
 u_str LISTEN 0      4096   /run/dbus/system_bus_socket    16234             * 0
@@ -186,12 +237,18 @@ u_str ESTAB  0      0      /run/systemd/journal/stdout    18291             * 18
 
 Examine socket buffer queue utilization to identify network buffer bloat or starvation:
 
+```bash
+ss -tm dst 93.184.216.34
+```
+
+Output:
+
 ```console
-$ ss -tm dst 93.184.216.34
 State Recv-Q Send-Q Local Address:Port  Peer Address:Port
 ESTAB 0      0      192.168.1.50:48922  93.184.216.34:443
 	 skmem:(r0,rb131072,t0,tb262144,f0,w0,o0,bl0,d0)
 ```
+
 *Key memory fields*:
 - `rb131072`: Maximum receive buffer quota in bytes.
 - `tb262144`: Maximum transmit buffer quota in bytes.
@@ -254,11 +311,13 @@ ss -tan state established '( dport = :http or dport = :https )' \
 
 ### 8.1 Read-Only Safety and Socket Killing
 
-`ss` is primarily a safe, read-only diagnostic utility. However, passing `-K` (`--kill`) directs the kernel to forcefully abort matching open sockets (`SOCK_DESTROY`). This requires `CAP_NET_ADMIN` and should never be executed without exact filter parameters.
+> [!CAUTION]
+> **Socket Termination Hazard**: While `ss` is primarily a safe, read-only diagnostic utility, passing `-K` (`--kill`) directs the kernel to forcefully abort matching open sockets (`SOCK_DESTROY`). This requires `CAP_NET_ADMIN` privileges and can terminate critical active production sessions if executed with improper filters.
 
 ### 8.2 Process Visibility Boundaries
 
-When run as an unprivileged user, `ss -p` cannot resolve PIDs or process names for sockets owned by other system users. To obtain complete process mapping across all daemons, execute `ss` with `sudo` or as `root`.
+> [!NOTE]
+> When run as an unprivileged user, `ss -p` cannot resolve PIDs or process names for sockets owned by other system users. To obtain complete process mapping across all daemons, execute `ss` with `sudo` or as `root`.
 
 ### 8.3 Portability Constraints
 
@@ -270,9 +329,15 @@ When run as an unprivileged user, `ss -p` cannot resolve PIDs or process names f
 
 ### 9.1 Always Use `-n` in High-Load or Emergency Audits
 
+> [!TIP]
+> **Always Use `-n` in High-Load or Emergency Audits**: Resolving hostnames and service ports incurs DNS network round-trips. When investigating traffic spikes or latency degradation, DNS timeouts can lock up terminal output. Always supply `-n` (`--numeric`) for immediate response.
+
 *Upstream Rationale*: `ss(8)` documentation notes that resolving DNS hostnames and service port strings incurs network round-trips and `/etc/services` lookups. During network degradation or high connection volume, DNS lookups stall terminal output. Always pass `-n` (`--numeric`) for immediate results.
 
 ### 9.2 Prefer `ss` Over `netstat` on Production Servers
+
+> [!IMPORTANT]
+> **Prefer `ss` Over Legacy `netstat`**: `netstat` is obsolete and parses `/proc/net/` text files while holding global kernel locks. On servers with tens of thousands of active sockets, running `netstat` triggers severe CPU spikes. `ss` queries kernel `sock_diag` via Netlink with minimal overhead.
 
 *Upstream Rationale*: `netstat` is obsolete and reads through `/proc/net/` text tables while holding kernel socket locks. Under heavy server loads (e.g. 50,000+ sockets), running `netstat` induces severe kernel latency spikes. `ss` utilizes zero-copy Netlink binary streams with negligible overhead.
 
