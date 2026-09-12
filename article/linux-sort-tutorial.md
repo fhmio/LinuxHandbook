@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: GNU Coreutils 9.11 | **POSIX**: POSIX.1-2024 (with GNU extensions) | **Safety Tier**: safe-read-only | **Scope**: text-processing
+
 `sort` sorts, merges, or checks the ordering of lines in text files. It implements external merge sort algorithms capable of sorting datasets that exceed the host machine's physical RAM by utilizing temporary disk storage buffers.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -79,13 +81,25 @@ sort [OPTION]... --files0-from=F
 
 ## 4. Basic Usage
 
-### 4.1 Alphabetical Sorting
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Basic alphabetical sort | `sort names.txt` | Orders lines by collation sequence |
+| Reverse sort | `sort -r names.txt` | Inverts comparison order |
+| Numeric sort | `sort -n scores.txt` | Evaluates strings as numbers |
+| Human-readable sizes | `sort -h disk_usage.txt` | Correctly evaluates 2K, 50M, 4G |
+| Sort by specific column | `sort -t: -k3,3n /etc/passwd` | Uses `:` separator and sorts 3rd field numerically |
+| Remove duplicate lines | `sort -u items.txt` | Outputs only unique entries |
+| Safe in-place sort | `sort -o data.txt data.txt` | Writes to same file without truncation hazard |
+
+### 4.2 Alphabetical Sorting
 
 ```bash
 sort names.txt
 ```
 
-### 4.2 Numeric Sorting in Reverse
+### 4.3 Numeric Sorting in Reverse
 
 ```bash
 sort -n -r scores.txt
@@ -128,7 +142,8 @@ du -h --max-depth=1 /var | sort -h -r | head -n 5
 
 ### 5.3 Safely Overwriting the Input File in Place
 
-In standard shell syntax, `sort file > file` truncates the input file to 0 bytes before reading it. Using `-o` guarantees safe in-place sorting:
+> [!CAUTION]
+> Never redirect output directly to the input file via `sort file > file`. The shell truncates `file` to 0 bytes before `sort` can read it, causing irrecoverable data loss. Always use `-o` for safe in-place sorting.
 
 ```bash
 sort -o accounts.txt accounts.txt
@@ -173,7 +188,9 @@ LC_ALL=C sort data.txt
 
 ### 8.1 Temp Directory Space Exhaustion
 
-Sorting huge datasets (e.g. 50 GB) can fill the `/tmp` filesystem (often mounted as an in-memory `tmpfs`), crashing the command. Always specify a physical disk location using `-T`:
+> [!WARNING]
+> Sorting massive datasets (e.g. >10 GB) can rapidly exhaust `/tmp` if mounted on an in-memory `tmpfs` filesystem, terminating the process unexpectedly. Always specify an explicit temporary directory on a physical partition using `-T`.
+
 ```bash
 sort -T /data/scratch massive_log.csv
 ```
