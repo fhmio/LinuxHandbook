@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: util-linux (util-linux 2.40) | **POSIX**: Linux-Specific (util-linux extension) | **Safety Tier**: safe-read-only | **Scope**: block-device-attributes
+
 `blkid` is a command-line utility for locating and printing block device attributes. It queries filesystem superblocks, volume managers, and partition tables using `libblkid` to extract persistent identifiers such as Universally Unique Identifiers (UUIDs), filesystem labels (`LABEL`), filesystem types (`TYPE`), and partition GUIDs (`PARTUUID`).
 
 - **Upstream Project & Provenance**: Maintained under **util-linux** as part of the `misc-utils` toolchain, powered by `libblkid`.
@@ -80,24 +82,47 @@ blkid -U uuid
 
 ## 4. Basic Usage
 
-### 4.1 Listing All Block Device Attributes
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| List all block attributes | `blkid` | `sudo blkid` | Scans all recognized block devices via cache |
+| Query specific partition | `blkid [device]` | `sudo blkid /dev/sda1` | Print attributes for a targeted device |
+| Extract bare UUID | `blkid -s UUID -o value [device]` | `sudo blkid -s UUID -o value /dev/sda2` | Clean unquoted string ideal for `/etc/fstab` |
+| Locate device by label | `blkid -L [label]` | `sudo blkid -L DATA_STORE` | Resolves filesystem label to device node |
+| Locate device by UUID | `blkid -U [uuid]` | `sudo blkid -U d281a8b1-36ce-4458-9584-913dcad2e7b1` | Resolves UUID to current device path |
+| Filter by filesystem type | `blkid -t TYPE=[type]` | `sudo blkid -t TYPE=xfs` | Matches all devices formatted with specified type |
+| Low-level superblock probe | `blkid -p [device]` | `sudo blkid -p /dev/sdb1` | Bypasses cache directly to device hardware |
+| Export shell variables | `blkid -o export [device]` | `sudo blkid -o export /dev/sda2` | Outputs key-value pairs for direct evaluation |
+
+### 4.2 Listing All Block Device Attributes
 
 Running `blkid` without arguments lists all recognized block devices and their associated metadata tokens:
 
+```bash
+sudo blkid
+```
+
+Output:
+
 ```console
-$ sudo blkid
 /dev/sda1: UUID="4A2F-89E1" BLOCK_SIZE="512" TYPE="vfat" PARTLABEL="EFI System" PARTUUID="19a0f421-4d32-45e8-b83a-d435789a42e1"
 /dev/sda2: UUID="d281a8b1-36ce-4458-9584-913dcad2e7b1" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="234c98d1-419b-4b12-921c-423589cba112"
 /dev/sda3: UUID="c80f12da-4b71-496a-b27e-85a03eef3a82" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="385b12da-519c-4912-984e-512398412034"
 /dev/sdb1: LABEL="DATA_STORE" UUID="b6a9c1e2-5401-447a-9a99-4d6428c40ff2" BLOCK_SIZE="4096" TYPE="xfs" PARTUUID="9fa12345-6789-abcd-ef01-23456789abcd"
 ```
 
-### 4.2 Querying a Specific Block Device
+### 4.3 Querying a Specific Block Device
 
 Inspect the tokens of a single partition:
 
+```bash
+sudo blkid /dev/sda2
+```
+
+Output:
+
 ```console
-$ sudo blkid /dev/sda2
 /dev/sda2: UUID="d281a8b1-36ce-4458-9584-913dcad2e7b1" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="234c98d1-419b-4b12-921c-423589cba112"
 ```
 
@@ -109,8 +134,13 @@ $ sudo blkid /dev/sda2
 
 Combine `-s UUID` with `-o value` to retrieve the bare UUID string without quotation marks or variable names, ideal for scripting:
 
+```bash
+sudo blkid -s UUID -o value /dev/sda2
+```
+
+Output:
+
 ```console
-$ sudo blkid -s UUID -o value /dev/sda2
 d281a8b1-36ce-4458-9584-913dcad2e7b1
 ```
 
@@ -125,15 +155,25 @@ echo "UUID=$UUID /boot ext4 defaults 0 2" | sudo tee -a /etc/fstab
 
 Find the device node corresponding to a filesystem volume label:
 
+```bash
+sudo blkid -L DATA_STORE
+```
+
+Output:
+
 ```console
-$ sudo blkid -L DATA_STORE
 /dev/sdb1
 ```
 
 Resolve a known UUID to its current active kernel device node:
 
+```bash
+sudo blkid -U d281a8b1-36ce-4458-9584-913dcad2e7b1
+```
+
+Output:
+
 ```console
-$ sudo blkid -U d281a8b1-36ce-4458-9584-913dcad2e7b1
 /dev/sda2
 ```
 
@@ -141,8 +181,13 @@ $ sudo blkid -U d281a8b1-36ce-4458-9584-913dcad2e7b1
 
 Identify all partitions formatted with `xfs`:
 
+```bash
+sudo blkid -t TYPE=xfs
+```
+
+Output:
+
 ```console
-$ sudo blkid -t TYPE=xfs
 /dev/sdb1: LABEL="DATA_STORE" UUID="b6a9c1e2-5401-447a-9a99-4d6428c40ff2" BLOCK_SIZE="4096" TYPE="xfs" PARTUUID="9fa12345-6789-abcd-ef01-23456789abcd"
 ```
 
@@ -150,8 +195,13 @@ $ sudo blkid -t TYPE=xfs
 
 When a block device has been reformatted with `mkfs`, the system cache might return old superblock tokens. Use `-p` to force an immediate hardware read:
 
+```bash
+sudo blkid -p /dev/sdb1
+```
+
+Output:
+
 ```console
-$ sudo blkid -p /dev/sdb1
 /dev/sdb1: LABEL="NEW_STORE" UUID="a1b2c3d4-e5f6-7890-1234-567890abcdef" BLOCK_SIZE="4096" TYPE="ext4" USAGE="filesystem" PART_ENTRY_SCHEME="gpt" PART_ENTRY_NAME="data" PART_ENTRY_UUID="9fa12345-6789-abcd-ef01-23456789abcd" PART_ENTRY_TYPE="0fc63daf-8483-4772-8e79-3d69d8477de4" PART_ENTRY_NUMBER="1" PART_ENTRY_OFFSET="2048" PART_ENTRY_SIZE="3907026944" PART_ENTRY_DISK="8:16"
 ```
 
@@ -163,8 +213,13 @@ $ sudo blkid -p /dev/sdb1
 
 Generate unambiguous key-value pairs formatted for direct shell sourcing:
 
+```bash
+sudo blkid -o export /dev/sda2
+```
+
+Output:
+
 ```console
-$ sudo blkid -o export /dev/sda2
 DEVNAME=/dev/sda2
 UUID=d281a8b1-36ce-4458-9584-913dcad2e7b1
 BLOCK_SIZE=4096
@@ -183,8 +238,13 @@ echo "Mounted filesystem type is: $TYPE on partition: $PARTUUID"
 
 Display device properties formatted as environment variables matching udev rules:
 
+```bash
+sudo blkid -o udev /dev/sda1
+```
+
+Output:
+
 ```console
-$ sudo blkid -o udev /dev/sda1
 ID_FS_UUID=4A2F-89E1
 ID_FS_UUID_ENC=4A2F-89E1
 ID_FS_BLOCK_SIZE=512
@@ -200,8 +260,8 @@ ID_PART_ENTRY_NUMBER=1
 
 When storage devices are detached or hot-unplugged, the cache file may retain obsolete entries. Run `-g` to remove deleted devices:
 
-```console
-$ sudo blkid -g
+```bash
+sudo blkid -g
 ```
 
 ---
@@ -236,12 +296,13 @@ $ sudo blkid -g
 
 ### 8.1 Read-Only Safety Profile
 
-`blkid` is strictly a non-destructive query and probing utility. It does not alter filesystem data, partition tables, or block device payloads.
+> [!NOTE]
+> **Read-Only Safety**: `blkid` is strictly a non-destructive query and probing utility. It inspects superblocks and volume headers without modifying filesystem data, partition tables, or block device payloads.
 
 ### 8.2 Privilege Boundaries
 
-- Standard unprivileged users can query `/etc/blkid.tab` or `/run/blkid/blkid.tab` to inspect previously probed attributes.
-- Low-level direct probing (`-p`) or updating stale cache entries requires `root` privileges (`CAP_SYS_ADMIN`) because reading raw block devices requires access to restricted `/dev` device nodes.
+> [!IMPORTANT]
+> Low-level direct probing (`-p`) or updating stale cache entries requires `root` privileges (`CAP_SYS_ADMIN`) because reading raw block devices requires access to restricted `/dev` device nodes. Standard unprivileged users can query `/etc/blkid.tab` or `/run/blkid/blkid.tab` to inspect previously probed attributes.
 
 ### 8.3 Portability Constraints
 
@@ -253,11 +314,13 @@ $ sudo blkid -g
 
 ### 9.1 Always Use `UUID=` in `/etc/fstab` Instead of Device Node Paths
 
-*Upstream Rationale*: Linux device node paths (such as `/dev/sda1` or `/dev/nvme0n1p2`) are assigned dynamically at boot time based on controller enumeration speed. Adding a drive or altering SATA/NVMe cabling changes device node names, causing boot failure. UUIDs remain invariant across hardware alterations.
+> [!TIP]
+> **Always Use UUID in `/etc/fstab`**: Linux device node paths (such as `/dev/sda1` or `/dev/nvme0n1p2`) are assigned dynamically at boot time based on controller enumeration speed. Adding a drive or altering SATA/NVMe cabling changes device node names, causing boot failure. UUIDs remain invariant across hardware alterations.
 
 ### 9.2 Use `-p` (Low-Level Probe) Immediately After Reformatting
 
-*Upstream Rationale*: `blkid(8)` documents that the default cache may retain outdated superblock identifiers if a partition was recently overwritten with `mkfs` or `dd`. Always supply `-p` or pass `-c /dev/null` when probing freshly formatted storage.
+> [!WARNING]
+> **Stale Cache After Reformatting**: `blkid(8)` documents that the default cache may retain outdated superblock identifiers if a partition was recently overwritten with `mkfs` or `dd`. Always supply `-p` or pass `-c /dev/null` when probing freshly formatted storage.
 
 ### 9.3 Extract Clean Tokens With `-s UUID -o value` in Scripts
 
