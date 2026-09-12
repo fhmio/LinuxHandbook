@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: GNU Coreutils 9.11 | **POSIX**: POSIX.1-2024 (with GNU extensions) | **Safety Tier**: safe-read-only | **Scope**: text-processing
+
 `tr` (translate) translates, squeezes, or deletes characters from standard input, writing the results to standard output. It operates strictly on character streams (not file path arguments) as a fast, byte-level transformation filter.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -66,7 +68,19 @@ POSIX character classes are specified enclosed in `[:` and `:]`:
 
 ## 4. Basic Usage
 
-### 4.1 Lowercase to Uppercase Conversion
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Lowercase to uppercase | `tr '[:lower:]' '[:upper:]' < file.txt` | Standard POSIX case translation |
+| Uppercase to lowercase | `tr '[:upper:]' '[:lower:]' < file.txt` | Standard POSIX lowercase fold |
+| Delete specific characters | `tr -d '\r' < dos.txt > unix.txt` | Strips DOS carriage return bytes |
+| Squeeze repeated spaces | `tr -s ' ' < spaced.txt` | Collapses consecutive spaces into one |
+| Replace character with newline | `tr ' ' '\n' < words.txt` | Splits space-separated list into lines |
+| Keep only alphanumerics | `tr -cd '[:alnum:]' < input.txt` | Deletes complement of alphanumeric set |
+| Translate delimiters | `tr ':' '\t' < /etc/passwd` | Converts colons to tabs |
+
+### 4.2 Lowercase to Uppercase Conversion
 
 ```bash
 echo "linux command tutorial" | tr '[:lower:]' '[:upper:]'
@@ -75,7 +89,7 @@ echo "linux command tutorial" | tr '[:lower:]' '[:upper:]'
 LINUX COMMAND TUTORIAL
 ```
 
-### 4.2 Deleting Specific Characters
+### 4.3 Deleting Specific Characters
 
 ```bash
 echo "Phone: (555) 123-4567" | tr -d ' ()-'
@@ -150,7 +164,8 @@ tr -dc 'A-Za-z0-9!@#$%^&*' < /dev/urandom | head -c 24; echo
 
 ### 8.1 No Direct Filename Operands
 
-Passing a filename directly (`tr 'a' 'b' file.txt`) causes `tr` to treat `'file.txt'` as `SET2`, leading to unexpected translations. Always redirect via `< file.txt` or pipe.
+> [!IMPORTANT]
+> `tr` does not accept file paths as arguments. Running `tr 'a' 'b' file.txt` treats `"file.txt"` as part of `SET2`, causing catastrophic translation errors or infinite hangs waiting on stdin. Always supply input via shell redirection (`< file.txt`) or a pipeline (`cat file.txt | tr ...`).
 
 ---
 
