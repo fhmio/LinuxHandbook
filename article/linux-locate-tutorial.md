@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: GNU Findutils 4.10 | **POSIX**: De-facto Standard (Not POSIX standardized) | **Safety Tier**: safe-read-only | **Scope**: database-file-search
+
 `locate` searches pre-computed databases for file names matching specified patterns. Unlike `find`, which traverses the physical filesystem in real time, `locate` queries an indexed database (typically maintained via `updatedb`), returning search results in milliseconds even across filesystems containing millions of files.
 
 - **Upstream Project & Provenance**: Distributed as part of **GNU Findutils** (`findutils`), alongside mlocate and plocate variants.
@@ -40,6 +42,9 @@ locate [OPTION]... PATTERN...
 ```
 
 ### 2.2 Execution Model & Indexing Lifecycle
+
+> [!NOTE]
+> `locate` does not scan live storage devices. Its results depend entirely on the last run of `updatedb` (commonly triggered via daily `cron` or `systemd.timer`). If searching for freshly created or deleted files, run `sudo updatedb` first or verify with `locate -e`.
 
 - `locate` reads a binary index database located by default at `/var/lib/locate/locatedb` (or `/var/lib/mlocate/mlocate.db`).
 - **Database Staleness**: Results reflect the state of the filesystem at the time `updatedb` was last executed. Files created or deleted after the last index cycle will not appear accurately unless updated or verified via `-e` (existing).
@@ -66,7 +71,19 @@ locate [OPTION]... PATTERN...
 
 ## 4. Basic Usage
 
-### 4.1 Substring Search
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Search by filename substring | `locate nginx.conf` | Fast indexed query across filesystem |
+| Case-insensitive search | `locate -i readme.md` | Ignores character casing |
+| Limit search results | `locate -n 10 "*.py"` | Limits output to first 10 matches |
+| Match basename only | `locate -b "\config.h"` | Prevents matches against parent folder names |
+| Check if file currently exists | `locate -e app.log` | Verifies existence on disk before displaying |
+| Count matching files | `locate -c "*.iso"` | Prints total match count |
+| Refresh index database | `sudo updatedb` | Updates database index for immediate querying |
+
+### 4.2 Substring Search
 
 ```bash
 locate nginx.conf
@@ -76,7 +93,7 @@ locate nginx.conf
 /usr/share/doc/nginx/examples/nginx.conf
 ```
 
-### 4.2 Restricting to Existing Files (`-e`)
+### 4.3 Restricting to Existing Files (`-e`)
 
 ```bash
 locate -e deleted_file.txt
@@ -158,8 +175,8 @@ locate -0 -e "*.dump" | xargs -0 -r du -ch | tail -n 1
 
 ### 8.1 Database Visibility & Privacy (GNU vs mlocate)
 
-- Traditional GNU `locate` uses a world-readable database: any unprivileged user can see the file paths of all files indexed on the system, potentially disclosing private directory structures.
-- Modern distributions often provide `mlocate` or `plocate` by default, which check file permissions (`stat`) against the querying user to ensure users cannot view filenames in directories they lack permissions to read.
+> [!WARNING]
+> Standard GNU `locate` uses a global world-readable index database, which can leak private file paths and directory structures to unprivileged users. Modern Linux environments mitigate this by deploying `mlocate` or `plocate`, which enforce filesystem access controls during query execution.
 
 ---
 
