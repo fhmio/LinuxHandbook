@@ -1,0 +1,46 @@
+[
+  {
+    "command": "curl",
+    "article_filename": "article/linux-curl-tutorial.md",
+    "upstream_suite": "curl",
+    "upstream_package": "curl",
+    "upstream_homepage": "https://curl.se/",
+    "official_documentation": {
+      "doc_type": "html-manual",
+      "man_section": 1,
+      "primary_url": "https://curl.se/docs/manpage.html",
+      "source_repo_url": "https://github.com/curl/curl/blob/master/docs/cmdline-opts/"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "curl 8.12.0",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "rsync",
+    "article_filename": "article/linux-rsync-tutorial.md",
+    "upstream_suite": "rsync",
+    "upstream_package": "rsync",
+    "upstream_homepage": "https://rsync.samba.org/",
+    "official_documentation": {
+      "doc_type": "html-manual",
+      "man_section": 1,
+      "primary_url": "https://download.samba.org/pub/rsync/rsync.1",
+      "source_repo_url": "https://github.com/WayneD/rsync/blob/master/rsync.1.md"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "rsync 3.5.0",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  }
+]
