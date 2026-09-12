@@ -1,0 +1,46 @@
+[
+  {
+    "command": "systemctl",
+    "article_filename": "article/linux-systemctl-tutorial.md",
+    "upstream_suite": "systemd",
+    "upstream_package": "systemd",
+    "upstream_homepage": "https://systemd.io/",
+    "official_documentation": {
+      "doc_type": "html-manual",
+      "man_section": 1,
+      "primary_url": "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html",
+      "source_repo_url": "https://github.com/systemd/systemd/blob/main/man/systemctl.xml"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "systemd 256",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  },
+  {
+    "command": "journalctl",
+    "article_filename": "article/linux-journalctl-tutorial.md",
+    "upstream_suite": "systemd",
+    "upstream_package": "systemd",
+    "upstream_homepage": "https://systemd.io/",
+    "official_documentation": {
+      "doc_type": "html-manual",
+      "man_section": 1,
+      "primary_url": "https://www.freedesktop.org/software/systemd/man/latest/journalctl.html",
+      "source_repo_url": "https://github.com/systemd/systemd/blob/main/man/journalctl.xml"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "systemd 256",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  }
+]
