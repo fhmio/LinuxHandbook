@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `OpenSSH 10.5` | **POSIX**: `None (OpenSSH standard)` | **Safety Tier**: `unprivileged-filesystem-write` | **Scope**: `Cryptographic key generation & certificate management`
+
 `ssh-keygen` is the key generation, management, and conversion utility in the **OpenSSH** suite. It generates authentication key pairs for SSH protocol versions, manages OpenSSH certificate authorities (CA), audits host key fingerprints, and modifies existing keys.
 
 - **Upstream Project & Provenance**: Maintained as a core utility within OpenSSH (`openssh-clients`).
@@ -89,11 +91,27 @@ ssh-keygen -s ca_key -I cert_id [-n principals] [-V validity_interval] file ...
 
 ## 4. Basic Usage
 
-### 4.1 Generating an Ed25519 User Key Pair
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Generate Ed25519 key pair | `ssh-keygen -t ed25519 -C "user@example.com"` | `-t` sets algorithm; `-C` adds comment |
+| Generate hardened key (KDF rounds) | `ssh-keygen -t ed25519 -a 100 -f ~/.ssh/id_prod` | `-a 100` increases bcrypt hash iterations |
+| Inspect key fingerprint | `ssh-keygen -l -f ~/.ssh/id_ed25519.pub` | `-l` prints SHA256 cryptographic hash |
+| Display visual host key art | `ssh-keygen -lv -f ~/.ssh/id_ed25519.pub` | `-v` displays ASCII randomart matrix |
+| Change private key passphrase | `ssh-keygen -p -f ~/.ssh/id_ed25519` | `-p` prompts for old and new passphrase |
+| Derive public key from private | `ssh-keygen -y -f ~/.ssh/id_ed25519 > id.pub` | `-y` extracts public key text |
+| Remove obsolete host key | `ssh-keygen -R 192.168.1.100` | `-R` purges old IP/host entry from `known_hosts` |
+| Hash known_hosts file | `ssh-keygen -H` | `-H` hashes hostnames for reconnaissance defense |
+
+### 4.2 Generating an Ed25519 User Key Pair
 
 ```bash
 ssh-keygen -t ed25519 -C "admin@corp.example.com" -f ~/.ssh/id_ed25519
 ```
+
+*Sample terminal output:*
+
 ```console
 Generating public/private ed25519 key pair.
 Enter passphrase (empty for no passphrase): 
@@ -116,11 +134,14 @@ The key's randomart image is:
 +----[SHA256]-----+
 ```
 
-### 4.2 Inspecting Key Fingerprints
+### 4.3 Inspecting Key Fingerprints
 
 ```bash
 ssh-keygen -l -f ~/.ssh/id_ed25519.pub
 ```
+
+*Sample terminal output:*
+
 ```text
 256 SHA256:7fK2m9W81XzpBqLa39XjN1sK21vL3p0kZqA7w9eF1m8 admin@corp.example.com (ED25519)
 ```
@@ -136,6 +157,7 @@ Increasing KDF work factor to 100 rounds to protect local credentials against of
 ```bash
 ssh-keygen -t ed25519 -a 100 -f ~/.ssh/id_production_ed25519
 ```
+
 - **Technical Analysis**: `-a 100` instructs `ssh-keygen` to perform 100 rounds of bcrypt KDF during key encryption, exponentially slowing brute-force attempts on the stolen keyfile.
 
 ### 5.2 Purging Changed Server Keys from `known_hosts`
@@ -145,6 +167,9 @@ When a remote server is re-imaged and its host key changes, `ssh` refuses connec
 ```bash
 ssh-keygen -R 192.168.1.100
 ```
+
+*Sample terminal output:*
+
 ```text
 # Host 192.168.1.100 found: line 14
 /home/admin/.ssh/known_hosts updated.
@@ -153,11 +178,12 @@ Original contents retained as /home/admin/.ssh/known_hosts.old
 
 ### 5.3 Deriving a Lost Public Key from Private Key
 
-If the `.pub` file is accidentally deleted:
+If the `.pub` file is accidentally deleted, recover it directly from the private key:
 
 ```bash
 ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
 ```
+
 - Re-derives the public key text directly from the encrypted private key after passphrase entry.
 
 ### 5.4 Changing the Passphrase of an Existing Key
@@ -165,6 +191,9 @@ ssh-keygen -y -f ~/.ssh/id_ed25519 > ~/.ssh/id_ed25519.pub
 ```bash
 ssh-keygen -p -f ~/.ssh/id_ed25519
 ```
+
+*Sample terminal output:*
+
 ```console
 Enter old passphrase:
 Key has comment 'admin@corp.example.com'
@@ -190,14 +219,20 @@ OpenSSH certificates eliminate `known_hosts` prompts and `authorized_keys` file 
    ```bash
    ssh-keygen -s /etc/ssh/ca_user_key -I "developer_alice" -n alice,deployer -V +30d ~/.ssh/id_ed25519.pub
    ```
+
+   *Sample terminal output:*
+
    ```text
    Signed user key /home/alice/.ssh/id_ed25519-cert.pub: id "developer_alice" serial 0 for alice,deployer valid from 2026-09-12T10:00:00 to 2026-10-12T10:00:00
    ```
 
-3. **Verify the Certificate**:
+3. **Verify the Generated Certificate**:
    ```bash
    ssh-keygen -L -f ~/.ssh/id_ed25519-cert.pub
    ```
+
+   *Sample terminal output:*
+
    ```text
    Type: ssh-ed25519-cert-v01@openssh.com user certificate
    Public key: ED25519-CERT SHA256:...
@@ -233,29 +268,43 @@ OpenSSH certificates eliminate `known_hosts` prompts and `authorized_keys` file 
 
 ### 8.1 Modern Cryptosystem Evaluation
 
-- **Ed25519**: 256-bit Edwards-curve Digital Signature Algorithm. Upstream default and strongly recommended. Constant-time operations prevent side-channel timing attacks.
-- **RSA**: Supported for legacy compatibility. Minimum acceptable key length is 3072 bits (`-b 3072`). RSA keys with SHA-1 signatures are rejected by default in modern OpenSSH.
-- **FIDO2 Hardware Keys (`-sk`)**: OpenSSH supports hardware security tokens (`-t ed25519-sk`) where the private key requires physical touch on a USB/NFC authenticator.
+> [!TIP]
+> **Ed25519 Default**: 256-bit Edwards-curve Digital Signature Algorithm. Upstream default and strongly recommended. Constant-time operations prevent side-channel timing attacks.
+
+> [!WARNING]
+> **Deprecated Algorithms**: RSA keys with SHA-1 signatures are rejected by default in modern OpenSSH. If RSA is mandatory for legacy interoperability, minimum key size is 3072 bits (`-b 3072`). DSA is obsolete and unsupported.
+
+> [!NOTE]
+> **FIDO2 Hardware Keys (`-sk`)**: OpenSSH supports hardware security tokens (`-t ed25519-sk`) where the private key requires physical touch on a USB/NFC authenticator.
 
 ---
 
 ## 9. Best Practices
 
 1. **Standardize on Ed25519 Across Infrastructure**:
-   - *Guidance*: Default all key creation to `ssh-keygen -t ed25519`.
-   - *Authoritative Justification*: OpenSSH upstream documentation confirms Ed25519 provides compact 68-character public keys and enhanced side-channel attack resistance.
+   > [!TIP]
+   > *Guidance*: Default all key creation to `ssh-keygen -t ed25519`.
+   > *Authoritative Justification*: OpenSSH upstream documentation confirms Ed25519 provides compact 68-character public keys and enhanced side-channel attack resistance.
+
 2. **Always Encrypt Private Keys with a Strong Passphrase**:
-   - *Guidance*: Never generate passphrase-less keys (`-N ""`) for human interactive accounts; delegate caching to `ssh-agent`.
-   - *Authoritative Justification*: Unencrypted private keys stored on disk can be exfiltrated without defense if an unprivileged vulnerability is exploited.
+   > [!IMPORTANT]
+   > *Guidance*: Never generate passphrase-less keys (`-N ""`) for human interactive accounts; delegate caching to `ssh-agent`.
+   > *Authoritative Justification*: Unencrypted private keys stored on disk can be exfiltrated without defense if an unprivileged vulnerability is exploited.
+
 3. **Increase KDF Iterations for High-Value Keys**:
-   - *Guidance*: Pass `-a 64` or `-a 100` when creating administrative master keys.
-   - *Authoritative Justification*: The default bcrypt KDF slows down parallel GPU cracking of captured private keys.
+   > [!TIP]
+   > *Guidance*: Pass `-a 64` or `-a 100` when creating administrative master keys.
+   > *Authoritative Justification*: The default bcrypt KDF slows down parallel GPU cracking of captured private keys.
+
 4. **Obfuscate Known Host Records**:
-   - *Guidance*: Run `ssh-keygen -H` to hash `~/.ssh/known_hosts`.
-   - *Authoritative Justification*: Prevents attackers from harvesting internal hostnames and IP addresses if workstation files are read.
+   > [!TIP]
+   > *Guidance*: Run `ssh-keygen -H` to hash `~/.ssh/known_hosts`.
+   > *Authoritative Justification*: Prevents attackers from harvesting internal hostnames and IP addresses if workstation files are read.
+
 5. **Implement Time-Bound SSH Certificates**:
-   - *Guidance*: Use `-V +1d` to `-V +30d` when signing certificates with a CA.
-   - *Authoritative Justification*: Enforces key rotation and expiration without requiring manual edits to remote `authorized_keys`.
+   > [!IMPORTANT]
+   > *Guidance*: Use `-V +1d` to `-V +30d` when signing certificates with a CA.
+   > *Authoritative Justification*: Enforces key rotation and expiration without requiring manual edits to remote `authorized_keys`.
 
 ---
 
