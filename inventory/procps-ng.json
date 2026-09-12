@@ -1,0 +1,184 @@
+[
+  {
+    "command": "ps",
+    "article_filename": "article/linux-ps-tutorial.md",
+    "upstream_suite": "procps-ng",
+    "upstream_package": "procps-ng",
+    "upstream_homepage": "https://gitlab.com/procps-ng/procps",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man7.org/linux/man-pages/man1/ps.1.html",
+      "source_repo_url": "https://gitlab.com/procps-ng/procps/-/blob/master/man/ps.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "procps-ng 4.0.4",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "top",
+    "article_filename": "article/linux-top-tutorial.md",
+    "upstream_suite": "procps-ng",
+    "upstream_package": "procps-ng",
+    "upstream_homepage": "https://gitlab.com/procps-ng/procps",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man7.org/linux/man-pages/man1/top.1.html",
+      "source_repo_url": "https://gitlab.com/procps-ng/procps/-/blob/master/man/top.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "procps-ng 4.0.4",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "free",
+    "article_filename": "article/linux-free-tutorial.md",
+    "upstream_suite": "procps-ng",
+    "upstream_package": "procps-ng",
+    "upstream_homepage": "https://gitlab.com/procps-ng/procps",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man7.org/linux/man-pages/man1/free.1.html",
+      "source_repo_url": "https://gitlab.com/procps-ng/procps/-/blob/master/man/free.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "procps-ng 4.0.4",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "vmstat",
+    "article_filename": "article/linux-vmstat-tutorial.md",
+    "upstream_suite": "procps-ng",
+    "upstream_package": "procps-ng",
+    "upstream_homepage": "https://gitlab.com/procps-ng/procps",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/vmstat.8.html",
+      "source_repo_url": "https://gitlab.com/procps-ng/procps/-/blob/master/man/vmstat.8"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "procps-ng 4.0.4",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "pgrep",
+    "article_filename": "article/linux-pgrep-tutorial.md",
+    "upstream_suite": "procps-ng",
+    "upstream_package": "procps-ng",
+    "upstream_homepage": "https://gitlab.com/procps-ng/procps",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man7.org/linux/man-pages/man1/pgrep.1.html",
+      "source_repo_url": "https://gitlab.com/procps-ng/procps/-/blob/master/man/pgrep.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "procps-ng 4.0.4",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "pkill",
+    "article_filename": "article/linux-pkill-tutorial.md",
+    "upstream_suite": "procps-ng",
+    "upstream_package": "procps-ng",
+    "upstream_homepage": "https://gitlab.com/procps-ng/procps",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man7.org/linux/man-pages/man1/pkill.1.html",
+      "source_repo_url": "https://gitlab.com/procps-ng/procps/-/blob/master/man/pkill.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "procps-ng 4.0.4",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  },
+  {
+    "command": "w",
+    "article_filename": "article/linux-w-tutorial.md",
+    "upstream_suite": "procps-ng",
+    "upstream_package": "procps-ng",
+    "upstream_homepage": "https://gitlab.com/procps-ng/procps",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man7.org/linux/man-pages/man1/w.1.html",
+      "source_repo_url": "https://gitlab.com/procps-ng/procps/-/blob/master/man/w.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "procps-ng 4.0.4",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "uptime",
+    "article_filename": "article/linux-uptime-tutorial.md",
+    "upstream_suite": "procps-ng",
+    "upstream_package": "procps-ng",
+    "upstream_homepage": "https://gitlab.com/procps-ng/procps",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man7.org/linux/man-pages/man1/uptime.1.html",
+      "source_repo_url": "https://gitlab.com/procps-ng/procps/-/blob/master/man/uptime.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "procps-ng 4.0.4",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only",
+    "collision_resolution": {
+      "is_shared_name": true,
+      "competing_suites": ["gnu-coreutils"],
+      "canonical_primary_suite": "procps-ng",
+      "differentiation_strategy": "procps-ng version reads /proc/uptime; Coreutils implementation detailed in portability section."
+    }
+  }
+]
