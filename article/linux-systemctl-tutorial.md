@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: systemd (systemd 256) | **POSIX**: Linux-Specific (systemd extension) | **Safety Tier**: privileged-system-destructive | **Scope**: service-manager-control
+
 `systemctl` is the central command-line management interface for the systemd init system and service manager. It controls systemd units (services, sockets, timers, mounts, targets, slices), manages unit files, inspects dependencies, queries system states, and executes power management operations.
 
 - **Upstream Project & Provenance**: Maintained within **systemd** (`systemd`), developed as the core control client communicating with `systemd` (PID 1) via D-Bus (`org.freedesktop.systemd1`).
@@ -101,12 +103,30 @@ systemd organizes managed entities into distinct unit types identified by their 
 
 ## 4. Basic Usage
 
-### 4.1 Inspecting Service Status
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Check service status | `systemctl status [unit]` | `systemctl status sshd.service` | Shows PID, memory, state, and recent logs |
+| Start service | `systemctl start [unit]` | `sudo systemctl start nginx.service` | Immediately activates daemon |
+| Stop service | `systemctl stop [unit]` | `sudo systemctl stop nginx.service` | Gracefully deactivates daemon |
+| Restart service | `systemctl restart [unit]` | `sudo systemctl restart nginx.service` | Stops and re-launches service |
+| Enable on boot | `systemctl enable --now [unit]` | `sudo systemctl enable --now nginx.service` | Sets autostart symlink and launches now |
+| Drop-in unit edit | `systemctl edit [unit]` | `sudo systemctl edit nginx.service` | Creates safe override in `/etc/systemd/system` |
+| Check if active | `systemctl is-active --quiet [unit]` | `systemctl is-active --quiet nginx.service` | Returns exit code 0 if running (ideal for scripts) |
+| Reload systemd daemon | `systemctl daemon-reload` | `sudo systemctl daemon-reload` | Re-reads all unit files from disk |
+
+### 4.2 Inspecting Service Status
 
 Check the operational health, active cgroup, memory consumption, and recent log output of a service:
 
+```bash
+systemctl status sshd.service
+```
+
+Output:
+
 ```console
-$ systemctl status sshd.service
 ● sshd.service - OpenSSH server daemon
      Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; preset: enabled)
      Active: active (running) since Fri 2026-09-12 10:00:15 UTC; 9h ago
@@ -125,7 +145,7 @@ Sep 12 10:00:15 server sshd[789]: Server listening on :: port 22.
 Sep 12 10:00:15 server systemd[1]: Started OpenSSH server daemon.
 ```
 
-### 4.2 Starting and Stopping Services
+### 4.3 Starting and Stopping Services
 
 Control service execution state immediately:
 
@@ -181,8 +201,13 @@ RestartSec=5s
 
 Review the complete merged unit definition with `cat`:
 
+```bash
+systemctl cat nginx.service
+```
+
+Output:
+
 ```console
-$ systemctl cat nginx.service
 # /usr/lib/systemd/system/nginx.service
 [Unit]
 Description=The NGINX HTTP and reverse proxy server
@@ -200,8 +225,13 @@ RestartSec=5s
 
 Identify all services currently in an error state:
 
+```bash
+systemctl --failed
+```
+
+Output:
+
 ```console
-$ systemctl --failed
   UNIT          LOAD   ACTIVE SUB    DESCRIPTION
 ● badapp.service loaded failed failed Custom Internal Application Service
 
@@ -218,8 +248,13 @@ sudo systemctl reset-failed badapp.service
 
 Audit all scheduled systemd timers (replacements for cron jobs):
 
+```bash
+systemctl list-timers
+```
+
+Output:
+
 ```console
-$ systemctl list-timers
 NEXT                         LEFT          LAST                         PASSED       UNIT                         ACTIVATES
 Sat 2026-09-12 20:00:00 UTC  45min left    Sat 2026-09-12 19:00:00 UTC  14min ago    sysstat-collect.timer        sysstat-collect.service
 Sun 2026-09-13 00:00:00 UTC  4h 45min left Sat 2026-09-12 00:00:12 UTC  19h ago      logrotate.timer              logrotate.service
@@ -247,8 +282,13 @@ fi
 
 Extract discrete unit properties formatted for automated consumption without parsing multiline output:
 
+```bash
+systemctl show -p ActiveState,SubState,MainPID,MemoryCurrent sshd.service
+```
+
+Output:
+
 ```console
-$ systemctl show -p ActiveState,SubState,MainPID,MemoryCurrent sshd.service
 ActiveState=active
 SubState=running
 MainPID=789
@@ -266,8 +306,13 @@ echo "Main PID of SSHD is: $PID"
 
 Visualize direct and inverse dependency trees:
 
+```bash
+systemctl list-dependencies --before sshd.service
+```
+
+Output:
+
 ```console
-$ systemctl list-dependencies --before sshd.service
 sshd.service
 ● ├─multi-user.target
 ● └─graphical.target
@@ -275,8 +320,13 @@ sshd.service
 
 Trace required dependencies in reverse order:
 
+```bash
+systemctl list-dependencies --reverse sshd.service
+```
+
+Output:
+
 ```console
-$ systemctl list-dependencies --reverse sshd.service
 sshd.service
 ● └─multi-user.target
 ●   └─graphical.target
@@ -340,9 +390,10 @@ Systemd searches for unit files across three primary directories in strict order
 
 ### 8.1 Destructive Operations and Safety Controls
 
-Executing `systemctl isolate`, `reboot`, `poweroff`, or `emergency` immediately alters system runlevel state:
-- Running `systemctl isolate rescue.target` shuts down all non-essential services, terminating remote SSH connections.
-- Masking units (`systemctl mask`) prevents accidental auto-activation by packaging scripts or dependency pulls.
+> [!CAUTION]
+> **State Isolation and Remote Hazards**: Operations like `systemctl isolate rescue.target`, `reboot`, `poweroff`, or `emergency` immediately terminate non-essential services, instantly severing remote SSH sessions. Always execute state isolation from out-of-band consoles.
+
+Masking units (`systemctl mask`) prevents accidental auto-activation by packaging scripts or dependency pulls.
 
 ### 8.2 Privilege Boundaries
 
@@ -358,9 +409,15 @@ Modifying system units requires `root` privileges via D-Bus PolicyKit authorizat
 
 ### 9.1 Always Use `systemctl edit` for Overrides
 
+> [!TIP]
+> **Always Use `systemctl edit` for Overrides**: Never edit vendor unit files directly in `/usr/lib/systemd/system/` as upstream package updates overwrite local modifications. `systemctl edit <unit>` creates non-destructive drop-in snippets under `/etc/systemd/system/<unit>.d/override.conf`.
+
 *Upstream Rationale*: Editing vendor unit files in `/usr/lib/systemd/system/` is an anti-pattern; package updates automatically overwrite local modifications. Using `systemctl edit <unit>` creates non-destructive drop-in snippets under `/etc/systemd/system/<unit>.d/override.conf` that survive package upgrades.
 
 ### 9.2 Execute `systemctl daemon-reload` After Manual File Changes
+
+> [!IMPORTANT]
+> **Execute `systemctl daemon-reload` After Manual Edits**: Modifying unit files on disk directly without issuing `systemctl daemon-reload` leaves PID 1 running cached definitions, causing missing or stale configurations.
 
 *Upstream Rationale*: `systemd(1)` caches parsed unit definitions in user-space memory. Modifying unit files on disk directly without issuing `systemctl daemon-reload` leaves PID 1 running old dependency graphs, causing unpredictable behavior or missing units.
 
