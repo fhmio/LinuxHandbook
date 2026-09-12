@@ -1,0 +1,90 @@
+[
+  {
+    "command": "ip",
+    "article_filename": "article/linux-ip-tutorial.md",
+    "upstream_suite": "iproute2",
+    "upstream_package": "iproute2",
+    "upstream_homepage": "https://wiki.linuxfoundation.org/networking/iproute2",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/ip.8.html",
+      "source_repo_url": "https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/man/man8/ip.8"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "iproute2 6.13",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-network-state-altering"
+  },
+  {
+    "command": "ss",
+    "article_filename": "article/linux-ss-tutorial.md",
+    "upstream_suite": "iproute2",
+    "upstream_package": "iproute2",
+    "upstream_homepage": "https://wiki.linuxfoundation.org/networking/iproute2",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/ss.8.html",
+      "source_repo_url": "https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/man/man8/ss.8"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "iproute2 6.13",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "tc",
+    "article_filename": "article/linux-tc-tutorial.md",
+    "upstream_suite": "iproute2",
+    "upstream_package": "iproute2",
+    "upstream_homepage": "https://wiki.linuxfoundation.org/networking/iproute2",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/tc.8.html",
+      "source_repo_url": "https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/man/man8/tc.8"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "iproute2 6.13",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-network-state-altering"
+  },
+  {
+    "command": "bridge",
+    "article_filename": "article/linux-bridge-tutorial.md",
+    "upstream_suite": "iproute2",
+    "upstream_package": "iproute2",
+    "upstream_homepage": "https://wiki.linuxfoundation.org/networking/iproute2",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/bridge.8.html",
+      "source_repo_url": "https://git.kernel.org/pub/scm/network/iproute2/iproute2.git/tree/man/man8/bridge.8"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "iproute2 6.13",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-network-state-altering"
+  }
+]
