@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: procps-ng 4.0.4 | **POSIX**: De-facto Standard (Not POSIX standardized) | **Safety Tier**: safe-read-only | **Scope**: virtual-memory-statistics
+
 `vmstat` (virtual memory statistics) reports point-in-time and continuous information about processes, memory, paging, block I/O, traps, and CPU activity. It provides a compact, single-line snapshot of overall operating system performance and resource contention.
 
 - **Upstream Project & Provenance**: Maintained within **procps-ng** (`procps-ng`).
@@ -41,7 +43,9 @@ vmstat [options] [delay [count]]
 
 ### 2.2 First Line Rule
 
-- **Critical Upstream Rule**: The **very first line** of output from `vmstat` displays averages calculated **since the last system reboot**.
+> [!IMPORTANT]
+> **The First Line Rule**: The very first row of statistics output by `vmstat` reflects cumulative averages since the last system boot, **not** current activity. Always discard or ignore the first line when diagnosing active performance issues.
+
 - Subsequent lines display statistics calculated strictly over the specified `delay` sampling interval.
 - Therefore, when diagnosing live performance, **ignore the first line** and inspect the subsequent sampling lines.
 
@@ -66,7 +70,18 @@ vmstat [options] [delay [count]]
 
 ## 4. Basic Usage
 
-### 4.1 Continuous Sampling Every 2 Seconds
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Sample every 2 seconds | `vmstat 2` | Continuous performance telemetry |
+| Sample 5 iterations | `vmstat 1 5` | Updates 5 times at 1-second intervals |
+| Wide output with timestamps | `vmstat -t -w 1` | Prevents column overflow and adds timestamp |
+| Active/inactive memory | `vmstat -a 2` | Shows active vs inactive memory pages |
+| Disk I/O statistics | `vmstat -d` | Reports reads, writes, and sectors per drive |
+| Memory summary table | `vmstat -s` | Event counters and cumulative stats |
+
+### 4.2 Continuous Sampling Every 2 Seconds
 
 ```bash
 vmstat 2 4
@@ -85,6 +100,9 @@ procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
 ## 5. Practical Operations
 
 ### 5.1 Diagnosing Memory Starvation via `si` and `so`
+
+> [!WARNING]
+> If `so` (swap-out) consistently exceeds zero over multiple sampling intervals, physical memory is exhausted and the kernel is forced to page out memory to disk, leading to severe latency and thrashing.
 
 - `si` (Swap-In): Memory paged in from swap disk per second.
 - `so` (Swap-Out): Memory paged out to swap disk per second.
