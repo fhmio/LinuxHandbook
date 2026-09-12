@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `GNU Coreutils 9.11` | **POSIX**: `POSIX.1-2024 (with GNU extensions)` | **Safety Tier**: `unprivileged-filesystem-write` | **Scope**: `Atomic file renaming, directory relocation & cross-device transfers`
+
 `mv` moves or renames files and directories. When the source and destination reside on the same filesystem, `mv` performs an instantaneous, atomic directory-entry rename via the `rename(2)` system call. When moving across different filesystem boundaries, `mv` transparently copies the data and removes the original source.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -70,13 +72,26 @@ mv [OPTION]... -t DIRECTORY SOURCE...
 
 ## 4. Basic Usage
 
-### 4.1 Renaming a File
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Rename file or directory | `mv old_name.txt new_name.txt` | Instantaneous atomic rename (same filesystem) |
+| Move files to directory | `mv file1.txt file2.txt /dest/` | Relocates files into destination folder |
+| Prompt before overwrite | `mv -i src.txt dst.txt` | `-i` interactive prompt before replacing existing file |
+| Do not overwrite existing | `mv -n src.txt dst.txt` | `-n` no-clobber protection against overwrites |
+| Update only newer files | `mv -u src.txt dst.txt` | `-u` moves only if source is newer or target is missing |
+| Versioned backup before replace | `mv --backup=numbered new.conf current.conf` | Creates `current.conf.~1~` backup before overwrite |
+| Atomic directory replacement | `mv -T -f ./build_v2 /var/www/active` | `-T` prevents nesting inside existing directory |
+| Batch move via xargs | `... \| xargs -0 mv -t /quarantine/` | `-t` sets destination directory upfront |
+
+### 4.2 Renaming a File
 
 ```bash
 mv old_name.txt new_name.txt
 ```
 
-### 4.2 Moving Multiple Files into a Directory
+### 4.3 Moving Multiple Files into a Directory
 
 ```bash
 mv file1.txt file2.txt /var/log/archive/
@@ -93,6 +108,7 @@ Deploying a new release directory atomically on the same filesystem:
 ```bash
 mv -T -f ./build_v2 /var/www/active_release
 ```
+
 - **Technical Analysis**: Because both paths reside on the same filesystem, the rename completes in a single atomic kernel operation. Web server worker processes never see a half-copied directory.
 
 ### 5.2 Moving with Automated Versioned Backups
@@ -102,6 +118,9 @@ Preventing accidental data loss during configuration moves:
 ```bash
 mv --backup=numbered -v new_nginx.conf /etc/nginx/nginx.conf
 ```
+
+*Sample terminal output:*
+
 ```console
 renamed 'new_nginx.conf' -> '/etc/nginx/nginx.conf' (backup: '/etc/nginx/nginx.conf.~1~')
 ```
@@ -113,6 +132,7 @@ Moving logs without clobbering existing archives:
 ```bash
 mv -n /var/log/incoming/*.log /var/log/processed/
 ```
+
 - Silently leaves any file in `/var/log/incoming/` if a file of that name already exists in `/var/log/processed/`.
 
 ---
@@ -126,6 +146,7 @@ Standard `mv` requires the target directory to be the final argument, which comp
 ```bash
 find /tmp/uploads -name "*.tmp" -print0 | xargs -0 mv -t /var/quarantine/
 ```
+
 - Efficiently processes thousands of files in a single invocation without argument order manipulation.
 
 ---
@@ -145,25 +166,34 @@ find /tmp/uploads -name "*.tmp" -print0 | xargs -0 mv -t /var/quarantine/
 
 ### 8.1 Cross-Filesystem Interruption Vulnerabilities
 
-- During a cross-device move, if the process is killed (`SIGKILL`) or power is lost mid-transfer, data exists partially on the destination while still intact on the source. `mv` only unlinks the source once the destination copy and attribute sync verify cleanly.
+> [!WARNING]
+> **Cross-Device Non-Atomicity**: When `SOURCE` and `DEST` reside on different mount points, `rename(2)` fails with `EXDEV`. `mv` falls back to copying data blocks followed by unlinking the source. This operation is **not atomic**.
+>
+> If a cross-device move is killed mid-transfer (e.g. `SIGKILL`, system crash, or power loss), partial files remain on the destination while the complete file remains on the source.
 
 ### 8.2 Traversal Nuances
 
-- Moving a directory across filesystems fails if target permissions or mount points prohibit directory creation.
+> [!NOTE]
+> Moving a directory across different filesystem mounts fails if the destination filesystem is mounted read-only or lacks adequate inode quotas.
 
 ---
 
 ## 9. Best Practices
 
 1. **Rely on `mv` for Atomic File Swaps Only on the Same Mount**:
-   - *Guidance*: Verify both paths share the same filesystem (`df -P path1 path2`) before relying on atomicity for production releases.
-   - *Authoritative Justification*: GNU documentation notes that cross-device moves fall back to copy-and-unlink, which is non-atomic.
+   > [!IMPORTANT]
+   > *Guidance*: Verify both paths share the same filesystem (`df -P path1 path2`) before relying on atomicity for production releases.
+   > *Authoritative Justification*: GNU documentation notes that cross-device moves fall back to copy-and-unlink, which is non-atomic.
+
 2. **Use `-T` in Deployment Automation**:
-   - *Guidance*: Pass `-T` when renaming directories in CI/CD pipelines.
-   - *Authoritative Justification*: Prevents `mv` from accidentally moving a release directory inside an existing release directory if the path already exists.
+   > [!TIP]
+   > *Guidance*: Pass `-T` when renaming directories in CI/CD pipelines.
+   > *Authoritative Justification*: Prevents `mv` from accidentally moving a release directory inside an existing release directory if the path already exists.
+
 3. **Use `-t` with `xargs` Pipelines**:
-   - *Guidance*: Structure automated moves as `mv -t <dir> <files...>`.
-   - *Authoritative Justification*: Avoids brittle shell expansion loops and enables batching with `xargs -0`.
+   > [!TIP]
+   > *Guidance*: Structure automated moves as `mv -t <dir> <files...>`.
+   > *Authoritative Justification*: Avoids brittle shell expansion loops and enables batching with `xargs -0`.
 
 ---
 
