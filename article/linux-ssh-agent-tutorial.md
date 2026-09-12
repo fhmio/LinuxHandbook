@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `OpenSSH 10.5` | **POSIX**: `None (OpenSSH standard)` | **Safety Tier**: `safe-read-only` | **Scope**: `Authentication key memory caching & signature daemon`
+
 `ssh-agent` is an authentication agent daemon in the **OpenSSH** suite that holds decrypted private keys in memory. Once an identity has been loaded (typically via `ssh-add`), clients such as `ssh`, `sftp`, and `scp` communicate with `ssh-agent` over a UNIX-domain socket to produce cryptographic signatures, eliminating repeated passphrase prompts without storing unencrypted keys on disk.
 
 - **Upstream Project & Provenance**: Core daemon in OpenSSH (`openssh-clients`).
@@ -70,30 +72,51 @@ ssh-agent [-c | -s] -k
 
 ## 4. Basic Usage
 
-### 4.1 Starting the Agent in an Active Terminal
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Start agent in current shell | `eval $(ssh-agent -s)` | Exports `SSH_AUTH_SOCK` and `SSH_AGENT_PID` |
+| Start agent with lifetime limit | `eval $(ssh-agent -s -t 14400)` | `-t` sets default key expiration (4 hours) |
+| Start agent with custom socket | `ssh-agent -a "$XDG_RUNTIME_DIR/ssh-agent.sock"` | `-a` binds to specific filesystem path |
+| Run isolated command subshell | `ssh-agent bash -c "ssh-add; ./deploy.sh"` | Agent self-terminates when subshell exits |
+| Run foreground daemon (systemd) | `ssh-agent -D -a "$XDG_RUNTIME_DIR/ssh-agent.socket"` | `-D` disables background daemon forking |
+| Terminate active agent daemon | `ssh-agent -k` | `-k` kills agent referenced by `SSH_AGENT_PID` |
+
+### 4.2 Starting the Agent in an Active Terminal
 
 ```bash
 eval $(ssh-agent -s)
 ```
+
+*Sample terminal output:*
+
 ```text
 Agent pid 61245
 ```
 
 Verifying the exported environment variables:
+
 ```bash
 echo "Socket: $SSH_AUTH_SOCK"
 echo "PID:    $SSH_AGENT_PID"
 ```
+
+*Sample terminal output:*
+
 ```text
 Socket: /tmp/ssh-aB34ef81/agent.61244
 PID:    61245
 ```
 
-### 4.2 Terminating the Agent
+### 4.3 Terminating the Agent
 
 ```bash
 ssh-agent -k
 ```
+
+*Sample terminal output:*
+
 ```text
 unset SSH_AUTH_SOCK;
 unset SSH_AGENT_PID;
@@ -111,6 +134,7 @@ Starting an agent that automatically purges identities from memory after 4 hours
 ```bash
 eval $(ssh-agent -s -t 14400)
 ```
+
 - Keys added without explicit timeout inherit the agent's 4-hour lifespan.
 
 ### 5.2 Running a Scoped Subshell
@@ -120,6 +144,7 @@ Executing a deployment script within a temporary, isolated agent session:
 ```bash
 ssh-agent bash -c "ssh-add ~/.ssh/id_deploy && ./deploy-cluster.sh"
 ```
+
 - **Technical Analysis**: When `./deploy-cluster.sh` completes and `bash -c` exits, `ssh-agent` automatically terminates and wipes the decrypted keys from memory.
 
 ### 5.3 Systemd User Service Integration
@@ -127,6 +152,7 @@ ssh-agent bash -c "ssh-add ~/.ssh/id_deploy && ./deploy-cluster.sh"
 Running `ssh-agent` as a persistent user service across all terminal tabs and desktop sessions:
 
 Create `~/.config/systemd/user/ssh-agent.service`:
+
 ```ini
 [Unit]
 Description=OpenSSH Key Agent
@@ -141,6 +167,7 @@ WantedBy=default.target
 ```
 
 Enable and export socket path in `~/.bashrc`:
+
 ```bash
 systemctl --user enable --now ssh-agent.service
 export SSH_AUTH_SOCK="${XDG_RUNTIME_DIR}/ssh-agent.socket"
@@ -157,6 +184,7 @@ By default, `ssh-agent` allows loading PKCS#11 cryptographic hardware provider l
 ```bash
 ssh-agent -P "/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so,/usr/lib64/libyubihsm.so"
 ```
+
 - Prevents malicious processes from loading rogue dynamic libraries into the agent address space.
 
 ---
@@ -181,30 +209,39 @@ ssh-agent -P "/usr/lib/x86_64-linux-gnu/opensc-pkcs11.so,/usr/lib64/libyubihsm.s
 
 ### 8.1 Socket Hijacking Risks
 
-- The UNIX-domain socket created by `ssh-agent` is protected by standard filesystem permissions (`0700` directory owned by the user).
-- **Root Exposure**: The root user (or any process with `CAP_DAC_OVERRIDE`) on the local system can access the socket and request signatures without knowing the user's passphrase.
-- **Agent Forwarding Warning**: Forwarding an agent (`ssh -A`) to a remote untrusted host exposes the socket to that host's administrators.
+> [!WARNING]
+> **Root Privilege Socket Hijacking**: Root users (or any process possessing `CAP_DAC_OVERRIDE`) on the local system can connect directly to your `SSH_AUTH_SOCK` and generate cryptographic authentication signatures without knowing your private key passphrase.
+>
+> Forwarding an agent (`ssh -A`) to an untrusted remote server exposes your local authentication socket to that remote server's administrators. Never enable agent forwarding globally.
 
 ### 8.2 Memory Protection
 
-OpenSSH `ssh-agent` invokes `mlock()` to prevent memory pages containing decrypted private keys from being written out to swap space.
+> [!NOTE]
+> **Swap Defense via mlock**: OpenSSH `ssh-agent` automatically invokes the `mlock()` kernel system call to lock decrypted key pages into physical RAM, preventing private key material from ever leaking to swap partitions or crash dumps.
 
 ---
 
 ## 9. Best Practices
 
 1. **Avoid Global Agent Forwarding**:
-   - *Guidance*: Never add `ForwardAgent yes` to `Host *` in `~/.ssh/config`.
-   - *Authoritative Justification*: Upstream security advisories warn that compromised intermediate systems can leverage forwarded agent sockets to impersonate the user.
+   > [!IMPORTANT]
+   > *Guidance*: Never add `ForwardAgent yes` to `Host *` in `~/.ssh/config`.
+   > *Authoritative Justification*: Upstream security advisories warn that compromised intermediate systems can leverage forwarded agent sockets to impersonate the user.
+
 2. **Enforce Key Lifetimes**:
-   - *Guidance*: Set an expiration timeout via `-t` or `ssh-add -t`.
-   - *Authoritative Justification*: Ensures keys do not remain indefinitely in memory on unattended workstations.
+   > [!TIP]
+   > *Guidance*: Set an expiration timeout via `-t` or `ssh-add -t`.
+   > *Authoritative Justification*: Ensures keys do not remain indefinitely in memory on unattended workstations.
+
 3. **Use Dedicated Sockets via `XDG_RUNTIME_DIR`**:
-   - *Guidance*: Bind sockets to `/run/user/$UID/ssh-agent.socket` rather than `/tmp`.
-   - *Authoritative Justification*: Linux systemd runtime directories reside in `tmpfs` and prevent socket exposure in world-writable `/tmp`.
+   > [!TIP]
+   > *Guidance*: Bind sockets to `/run/user/$UID/ssh-agent.socket` rather than `/tmp`.
+   > *Authoritative Justification*: Linux systemd runtime directories reside in `tmpfs` and prevent socket exposure in world-writable `/tmp`.
+
 4. **Require Confirmation for Sensitive Keys**:
-   - *Guidance*: Add keys with `ssh-add -c` to require interactive confirmation before signature generation.
-   - *Authoritative Justification*: Blocks background processes from stealthily using the agent without user awareness.
+   > [!IMPORTANT]
+   > *Guidance*: Add keys with `ssh-add -c` to require interactive confirmation before signature generation.
+   > *Authoritative Justification*: Blocks background processes from stealthily using the agent without user awareness.
 
 ---
 
