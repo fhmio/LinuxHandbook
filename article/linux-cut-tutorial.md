@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: GNU Coreutils 9.11 | **POSIX**: POSIX.1-2024 (with GNU extensions) | **Safety Tier**: safe-read-only | **Scope**: text-processing
+
 `cut` removes sections from each line of files or standard input. It extracts column fields based on delimiters (e.g. commas, tabs, colons) or slices exact byte/character offsets.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -67,7 +69,19 @@ cut OPTION... [FILE]...
 
 ## 4. Basic Usage
 
-### 4.1 Extracting Usernames from `/etc/passwd`
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Extract 1st column (colon-delimited) | `cut -d: -f1 /etc/passwd` | Slices field 1 using delimiter `:` |
+| Extract multiple fields | `cut -d, -f1,3 data.csv` | Extracts 1st and 3rd fields |
+| Extract field range | `cut -d$'\t' -f2-4 table.tsv` | Extracts fields 2 through 4 tab-delimited |
+| Slice fixed-width characters | `cut -c 1-10 fixed.txt` | Extracts characters 1 through 10 |
+| Invert field selection | `cut -d, --complement -f2 data.csv` | Drops column 2, keeping all other fields |
+| Change output delimiter | `cut -d: -f1,7 --output-delimiter=" " /etc/passwd` | Replaces delimiter in output stream |
+| Suppress non-delimited lines | `cut -d, -f2 -s mixed.csv` | Ignores comment or unseparated lines |
+
+### 4.2 Extracting Usernames from `/etc/passwd`
 
 ```bash
 cut -d: -f1 /etc/passwd | head -n 4
@@ -79,7 +93,7 @@ bin
 sys
 ```
 
-### 4.2 Slicing Multiple Non-Contiguous Fields
+### 4.3 Slicing Multiple Non-Contiguous Fields
 
 ```bash
 cut -d: -f1,6,7 /etc/passwd | head -n 2
@@ -155,8 +169,8 @@ cut -d, -f2 -s data_with_comments.csv
 
 ### 8.1 Single-Character Delimiter Limitation
 
-- `cut` strictly accepts a **single character** as `-d`. It cannot split on multi-character delimiters (e.g. `::` or `\s+`).
-- For multi-character splitting, use `awk -F"::"` or `sed`.
+> [!NOTE]
+> `cut` strictly accepts a **single byte/character** as its delimiter (`-d`). It cannot split streams using multi-character patterns (e.g., `::`) or variable-length whitespace (`\s+`). For multi-character delimiters or irregular whitespace columns, use `awk -F"::"` or `awk '{print $1}'`.
 
 ---
 
