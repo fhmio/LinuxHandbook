@@ -1,0 +1,68 @@
+[
+  {
+    "command": "tar",
+    "article_filename": "article/linux-tar-tutorial.md",
+    "upstream_suite": "gnu-tar",
+    "upstream_package": "tar",
+    "upstream_homepage": "https://www.gnu.org/software/tar/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/tar/manual/tar.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/tar.git/tree/doc/tar.texi"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU tar 1.35",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "gzip",
+    "article_filename": "article/linux-gzip-tutorial.md",
+    "upstream_suite": "gnu-gzip",
+    "upstream_package": "gzip",
+    "upstream_homepage": "https://www.gnu.org/software/gzip/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/gzip/manual/gzip.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/gzip.git/tree/doc/gzip.texi"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "GNU gzip 1.13",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "xz",
+    "article_filename": "article/linux-xz-tutorial.md",
+    "upstream_suite": "xz-utils",
+    "upstream_package": "xz",
+    "upstream_homepage": "https://tukaani.org/xz/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 1,
+      "primary_url": "https://man7.org/linux/man-pages/man1/xz.1.html",
+      "source_repo_url": "https://github.com/tukaani-project/xz/blob/master/src/xz/xz.1"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "XZ Utils 5.6.2",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  }
+]
