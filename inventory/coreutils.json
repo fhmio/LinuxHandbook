@@ -1,0 +1,332 @@
+[
+  {
+    "command": "ls",
+    "article_filename": "article/linux-ls-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/ls-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/ls.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "cp",
+    "article_filename": "article/linux-cp-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/cp-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/cp.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "mv",
+    "article_filename": "article/linux-mv-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/mv-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/mv.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "rm",
+    "article_filename": "article/linux-rm-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/rm-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/rm.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  },
+  {
+    "command": "mkdir",
+    "article_filename": "article/linux-mkdir-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/mkdir-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/mkdir.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "rmdir",
+    "article_filename": "article/linux-rmdir-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/rmdir-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/rmdir.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "touch",
+    "article_filename": "article/linux-touch-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/touch-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/touch.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "ln",
+    "article_filename": "article/linux-ln-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/ln-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/ln.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "cat",
+    "article_filename": "article/linux-cat-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/cat.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "head",
+    "article_filename": "article/linux-head-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/head-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/head.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "tail",
+    "article_filename": "article/linux-tail-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/tail-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/tail.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "sort",
+    "article_filename": "article/linux-sort-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/sort.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "uniq",
+    "article_filename": "article/linux-uniq-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/uniq-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/uniq.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "cut",
+    "article_filename": "article/linux-cut-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/cut-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/cut.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "tr",
+    "article_filename": "article/linux-tr-tutorial.md",
+    "upstream_suite": "gnu-coreutils",
+    "upstream_package": "coreutils",
+    "upstream_homepage": "https://www.gnu.org/software/coreutils/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/coreutils/manual/html_node/tr-invocation.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/coreutils.git/tree/src/tr.c"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Coreutils 9.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  }
+]
