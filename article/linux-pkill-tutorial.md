@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: procps-ng 4.0.4 | **POSIX**: De-facto Standard (Not POSIX standardized) | **Safety Tier**: privileged-system-destructive | **Scope**: process-signaling
+
 `pkill` sends specified signals (by default `SIGTERM`) to processes matching selection criteria. It combines process discovery with signal delivery, eliminating the need to look up PIDs manually before invoking `kill`.
 
 - **Upstream Project & Provenance**: Maintained within **procps-ng** (`procps-ng`).
@@ -65,14 +67,26 @@ pkill [options] pattern
 
 ## 4. Basic Usage
 
-### 4.1 Graceful Process Termination
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Graceful terminate by exact name | `pkill -x nginx` | Sends `SIGTERM` (15) to exact binary match |
+| Force kill unresponsive process | `pkill -9 -x frozen_app` | Sends uncatchable `SIGKILL` (9) |
+| Reload daemon configuration | `pkill -HUP -x sshd` | Sends `SIGHUP` (1) signal |
+| Signal matching full arguments | `pkill -f "python worker.py"` | Matches against full command line |
+| Kill all processes of user | `pkill -u deploy` | Targets processes belonging to user |
+| Terminate with echo logging | `pkill -e -x redis-server` | Outputs names and PIDs of signaled tasks |
+| Count matching targets without signaling | `pkill -c -x worker` | Dry-run count of potential targets |
+
+### 4.2 Graceful Process Termination
 
 ```bash
 pkill -x nginx
 ```
 - Sends `SIGTERM` to all processes named exactly `nginx`.
 
-### 4.2 Reloading Service Configuration via SIGHUP
+### 4.3 Reloading Service Configuration via SIGHUP
 
 ```bash
 pkill -HUP -x rsyslogd
@@ -119,7 +133,10 @@ sudo pkill -u baduser
 
 ### 6.1 Safe Two-Stage Dry-Run Pattern
 
-Because `pkill` without `-x` matches substrings, accidentally killing critical services is a serious risk (e.g. `pkill sh` matching `sshd` and killing remote administration).
+> [!CAUTION]
+> **Catastrophic Substring Collisions**: Running `pkill sh` without `-x` matches `sshd`, `bash`, `ssh-agent`, and any executable containing `"sh"`, instantly severing remote administrative access. Always supply `-x` or verify candidates with `pgrep` first.
+
+Because `pkill` without `-x` matches substrings, accidentally killing critical services is a serious risk.
 
 **The Safe Two-Stage Pattern**:
 1. Run `pgrep` with identical flags first to inspect matching processes:
@@ -152,7 +169,9 @@ Because `pkill` without `-x` matches substrings, accidentally killing critical s
 
 - An unprivileged user can only send signals to processes they own.
 - Sending signals to processes owned by other users or system daemons requires root (`CAP_KILL`).
-- Processes in the `D` state (uninterruptible sleep waiting for hardware I/O) cannot be killed, even by `pkill -9`.
+
+> [!NOTE]
+> Processes trapped in the kernel `D` state (uninterruptible sleep waiting on hardware disk/NFS I/O) cannot be terminated even by `pkill -9`. The process only exits after the underlying I/O system call completes or times out.
 
 ---
 
