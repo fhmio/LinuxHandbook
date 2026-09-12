@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: rsync (rsync 3.5.0) | **POSIX**: None (De-facto Standard) | **Safety Tier**: unprivileged-filesystem-write | **Scope**: remote-file-synchronization
+
 `rsync` (Remote Sync) is a fast, versatile utility for synchronizing files and directory trees locally or across networks. It utilizes a rolling-checksum delta-transfer algorithm that computes differences between source and destination files, transmitting only changed byte blocks over network connections.
 
 - **Upstream Project & Provenance**: Created by Andrew Tridgell and Paul Mackerras, maintained by Wayne Davison and the Samba team under the **rsync** project (`rsync`).
@@ -99,12 +101,29 @@ When synchronizing across remote hosts, `rsync` spawns a client process locally 
 
 ## 4. Basic Usage
 
-### 4.1 Local Directory Backup
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Local archive backup | `rsync -avh [src]/ [dest]/` | `rsync -avh /home/user/docs/ /mnt/backup/docs/` | Preserves permissions, times, and symlinks |
+| Safe dry-run test | `rsync -avhn --delete [src]/ [dest]/` | `rsync -avhn --delete /data/ /backup/data/` | Previews changes and deletions without writes |
+| Sync over SSH | `rsync -avzP -e ssh [src]/ [user]@[host]:[dest]/` | `rsync -avzP -e ssh /var/www/ deploy@server:/var/www/` | Compressed transfer with progress and resume |
+| Strict mirroring | `rsync -av --delete [src]/ [dest]/` | `rsync -av --delete /data/ /mirror/` | Deletes extraneous destination files |
+| Deduplicated snapshot | `rsync -a --link-dest=[prior] [src]/ [dest]/` | `rsync -a --delete --link-dest=/backup/yesterday/ /data/ /backup/today/` | Hardlinks unchanged files across snapshots |
+| Throttled sync | `rsync -av --bwlimit=[rate] [src]/ [dest]/` | `rsync -avzP --bwlimit=5M /data/ remote:/storage/` | Caps network socket bandwidth usage |
+| Atomic updates | `rsync -av --delay-updates [src]/ [dest]/` | `rsync -av --delay-updates /var/www/v2/ /var/www/live/` | Stages files and renames in final pass |
+
+### 4.2 Local Directory Backup
 
 Synchronize a local directory with archive preservation and human-readable transfer logs:
 
+```bash
+rsync -avh /home/user/documents/ /mnt/backup/documents/
+```
+
+Output:
+
 ```console
-$ rsync -avh /home/user/documents/ /mnt/backup/documents/
 sending incremental file list
 ./
 financial_report_2026.pdf
@@ -116,12 +135,17 @@ sent 4.82M bytes  received 84 bytes  9.64M bytes/sec
 total size is 4.81M  speedup is 1.00
 ```
 
-### 4.2 Safe Dry-Run Validation (`-n`)
+### 4.3 Safe Dry-Run Validation (`-n`)
 
 Always test backup or synchronization commands with `-n` (`--dry-run`) before modifying production storage:
 
+```bash
+rsync -avhn --delete /home/user/documents/ /mnt/backup/documents/
+```
+
+Output:
+
 ```console
-$ rsync -avhn --delete /home/user/documents/ /mnt/backup/documents/
 sending incremental file list
 deleting obsolete_draft.docx
 financial_report_2026.pdf
@@ -262,11 +286,13 @@ When running in standalone server mode (`rsync --daemon`), configuration is mana
 
 ### 8.1 Destructive Impact of `--delete`
 
-The `--delete` flag permanently removes files from destination directories. A common disaster occurs when the source directory path is mistyped or empty, causing `rsync` to wipe the entire destination. Always prepend `-n` (`--dry-run`) to verify the file deletion list before executing `--delete` operations.
+> [!CAUTION]
+> **Destructive Impact of `--delete`**: The `--delete` flag permanently removes files from destination directories. A mistyped source path or empty directory can wipe out the entire destination directory. Always test commands with `-n` (`--dry-run`) before executing with `--delete`.
 
 ### 8.2 Privilege Preservation Across Remote Hosts
 
-Archive mode (`-a`) attempts to preserve owner (`-o`) and group (`-g`) IDs. Preserving numeric UIDs and GIDs requires `root` privileges on the destination host. Unprivileged users running `rsync -a` will experience permission warnings unless `--no-owner --no-group` is specified.
+> [!NOTE]
+> Archive mode (`-a`) attempts to preserve owner (`-o`) and group (`-g`) IDs. Preserving numeric UIDs and GIDs requires `root` privileges on the destination host. Unprivileged users running `rsync -a` will experience permission warnings unless `--no-owner --no-group` is specified.
 
 ### 8.3 Portability Constraints
 
@@ -278,6 +304,9 @@ Archive mode (`-a`) attempts to preserve owner (`-o`) and group (`-g`) IDs. Pres
 
 ### 9.1 Double-Check Trailing Slashes on Source Paths
 
+> [!IMPORTANT]
+> **Double-Check Trailing Slashes on Source Paths**: A trailing slash on the source directory (`/src/dir/`) copies the **contents** into destination, whereas omitting the slash (`/src/dir`) copies the directory itself as a subdirectory (`/dest/dir/`).
+
 *Upstream Rationale*: Omitting a trailing slash on source directories copies the parent directory container (e.g. `/dest/source/`), while appending a trailing slash copies the child items directly (e.g. `/dest/`). Always explicitly check trailing slashes on source paths prior to execution.
 
 ### 9.2 Always Test with `-n` (`--dry-run`) Before Using `--delete`
@@ -285,6 +314,9 @@ Archive mode (`-a`) attempts to preserve owner (`-o`) and group (`-g`) IDs. Pres
 *Upstream Rationale*: `rsync(1)` documentation highlights that deleted files cannot be recovered once removed from the destination tree. Running `rsync -avhn --delete` provides complete visibility of scheduled deletions before physical disk writes occur.
 
 ### 9.3 Leverage `--link-dest` for Zero-Cost Hourly Snapshots
+
+> [!TIP]
+> **Leverage `--link-dest` for Zero-Cost Hourly Snapshots**: Traditional backups duplicate unchanged files across directories, wasting disk space. `--link-dest` creates hard links to identical files from a prior snapshot, consuming zero additional disk blocks.
 
 *Upstream Rationale*: Traditional full backups duplicate identical files across storage arrays, wasting disk space and I/O bandwidth. `--link-dest` utilizes Linux filesystem hard links to create instant, read-accessible, deduplicated differential backups.
 
