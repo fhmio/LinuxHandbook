@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/forrestchang-linux-command-tutorials/schemas/upstream-inventory.json",
+  "title": "LinuxCommandInventoryEntry",
+  "description": "Authoritative upstream inventory record for an individual Linux executable utility.",
+  "type": "object",
+  "required": [
+    "command",
+    "article_filename",
+    "upstream_suite",
+    "upstream_package",
+    "upstream_homepage",
+    "official_documentation",
+    "standard_status",
+    "current_researched_version",
+    "research_date",
+    "lifecycle_status",
+    "article_status",
+    "execution_safety_tier"
+  ],
+  "properties": {
+    "command": {
+      "type": "string",
+      "pattern": "^[a-z0-9_+-]+$",
+      "description": "Exact binary executable name as invoked in shell (e.g., 'sftp', 'ls', 'find', 'ip')."
+    },
+    "article_filename": {
+      "type": "string",
+      "pattern": "^article/linux-[a-z0-9_+-]+-tutorial\\.md$",
+      "description": "Target repository path, strictly conforming to 'article/linux-<command>-tutorial.md'."
+    },
+    "upstream_suite": {
+      "type": "string",
+      "enum": [
+        "gnu-coreutils",
+        "gnu-findutils",
+        "gnu-grep",
+        "gnu-sed",
+        "gnu-gawk",
+        "procps-ng",
+        "util-linux",
+        "iproute2",
+        "openssh",
+        "systemd",
+        "curl",
+        "rsync",
+        "gnu-tar",
+        "gnu-gzip",
+        "xz-utils"
+      ],
+      "description": "Canonical upstream project or suite responsible for the utility."
+    },
+    "upstream_package": {
+      "type": "string",
+      "description": "Name of the upstream distribution package or source tree (e.g., 'coreutils', 'procps-ng')."
+    },
+    "upstream_homepage": {
+      "type": "string",
+      "format": "uri",
+      "description": "Official canonical URL of the project home."
+    },
+    "official_documentation": {
+      "type": "object",
+      "required": ["doc_type", "primary_url"],
+      "properties": {
+        "doc_type": {
+          "type": "string",
+          "enum": ["man-page", "texinfo", "html-manual", "rfc", "kernel-doc"]
+        },
+        "man_section": {
+          "type": "integer",
+          "enum": [1, 8]
+        },
+        "primary_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Canonical online reference maintained by the project (e.g., man.openbsd.org, gnu.org/software/coreutils/manual)."
+        },
+        "source_repo_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Direct link to upstream repository manual source (e.g., git repo .adoc, .1, or .texi file)."
+        }
+      }
+    },
+    "standard_status": {
+      "type": "object",
+      "required": ["is_posix_standardized", "compliance_level"],
+      "properties": {
+        "is_posix_standardized": {
+          "type": "boolean",
+          "description": "True if specified in IEEE Std 1003.1-2024 (POSIX.1-2024) Shell and Utilities."
+        },
+        "posix_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "Canonical link to The Open Group POSIX.1-2024 utility specification if standardized."
+        },
+        "compliance_level": {
+          "type": "string",
+          "enum": [
+            "posix-standard-strict",
+            "posix-standard-with-gnu-extensions",
+            "linux-specific-upstream-extension",
+            "de-facto-standard"
+          ]
+        }
+      }
+    },
+    "current_researched_version": {
+      "type": "string",
+      "description": "Exact upstream release version researched (e.g., 'OpenSSH 10.5', 'GNU Coreutils 9.11', 'rsync 3.5.0')."
+    },
+    "research_date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO-8601 calendar date (YYYY-MM-DD) when authoritative upstream documentation was audited."
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "enum": ["active", "deprecated-upstream", "obsolete-upstream", "maintenance-only"],
+      "description": "Upstream maintenance lifecycle status. Obsolete utilities (e.g., procps-ng skill/snice) must be documented as obsolete."
+    },
+    "article_status": {
+      "type": "string",
+      "enum": ["planned", "drafting", "in-review", "validated", "published"],
+      "description": "Repository publishing state."
+    },
+    "execution_safety_tier": {
+      "type": "string",
+      "enum": [
+        "safe-read-only",
+        "unprivileged-filesystem-write",
+        "privileged-system-destructive",
+        "privileged-network-state-altering"
+      ],
+      "description": "Safety level determining testing isolation requirements during article verification."
+    },
+    "collision_resolution": {
+      "type": "object",
+      "description": "Details handling when multiple upstream projects ship an executable of the same name (e.g., 'uptime', 'kill', 'echo').",
+      "properties": {
+        "is_shared_name": { "type": "boolean" },
+        "competing_suites": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "canonical_primary_suite": { "type": "string" },
+        "differentiation_strategy": { "type": "string" }
+      }
+    },
+    "kernel_dependency": {
+      "type": "string",
+      "description": "Explicit kernel subsystem or minimum version required for full utility capability (critical for iproute2, util-linux namespaces, bpf)."
+    }
+  },
+  "additionalProperties": false
+}
