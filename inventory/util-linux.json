@@ -1,0 +1,134 @@
+[
+  {
+    "command": "mount",
+    "article_filename": "article/linux-mount-tutorial.md",
+    "upstream_suite": "util-linux",
+    "upstream_package": "util-linux",
+    "upstream_homepage": "https://github.com/util-linux/util-linux",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/mount.8.html",
+      "source_repo_url": "https://github.com/util-linux/util-linux/blob/master/sys-utils/mount.8.adoc"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "util-linux 2.40",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  },
+  {
+    "command": "umount",
+    "article_filename": "article/linux-umount-tutorial.md",
+    "upstream_suite": "util-linux",
+    "upstream_package": "util-linux",
+    "upstream_homepage": "https://github.com/util-linux/util-linux",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/umount.8.html",
+      "source_repo_url": "https://github.com/util-linux/util-linux/blob/master/sys-utils/umount.8.adoc"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "util-linux 2.40",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  },
+  {
+    "command": "findmnt",
+    "article_filename": "article/linux-findmnt-tutorial.md",
+    "upstream_suite": "util-linux",
+    "upstream_package": "util-linux",
+    "upstream_homepage": "https://github.com/util-linux/util-linux",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/findmnt.8.html",
+      "source_repo_url": "https://github.com/util-linux/util-linux/blob/master/misc-utils/findmnt.8.adoc"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "util-linux 2.40",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "lsblk",
+    "article_filename": "article/linux-lsblk-tutorial.md",
+    "upstream_suite": "util-linux",
+    "upstream_package": "util-linux",
+    "upstream_homepage": "https://github.com/util-linux/util-linux",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/lsblk.8.html",
+      "source_repo_url": "https://github.com/util-linux/util-linux/blob/master/misc-utils/lsblk.8.adoc"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "util-linux 2.40",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "fdisk",
+    "article_filename": "article/linux-fdisk-tutorial.md",
+    "upstream_suite": "util-linux",
+    "upstream_package": "util-linux",
+    "upstream_homepage": "https://github.com/util-linux/util-linux",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/fdisk.8.html",
+      "source_repo_url": "https://github.com/util-linux/util-linux/blob/master/fdisks/fdisk.8.adoc"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "util-linux 2.40",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  },
+  {
+    "command": "blkid",
+    "article_filename": "article/linux-blkid-tutorial.md",
+    "upstream_suite": "util-linux",
+    "upstream_package": "util-linux",
+    "upstream_homepage": "https://github.com/util-linux/util-linux",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://man7.org/linux/man-pages/man8/blkid.8.html",
+      "source_repo_url": "https://github.com/util-linux/util-linux/blob/master/misc-utils/blkid.8.adoc"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "linux-specific-upstream-extension"
+    },
+    "current_researched_version": "util-linux 2.40",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  }
+]
