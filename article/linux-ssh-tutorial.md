@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `OpenSSH 10.5` | **POSIX**: `De facto standard (IETF RFC 4251-4254)` | **Safety Tier**: `safe-read-only` | **Scope**: `Encrypted remote login & command execution`
+
 `ssh` (Secure Shell client) is the primary remote login and command execution program of the **OpenSSH** suite. It replaces insecure cleartext protocols such as Telnet, rlogin, and rsh, providing cryptographic confidentiality, integrity, and server authentication over untrusted IP networks.
 
 - **Upstream Project & Provenance**: Maintained by the OpenBSD Project and the OpenSSH Portable development team (`openssh-clients`).
@@ -50,7 +52,9 @@ ssh [-46AaCfGgKkMNnqsTtVvXxYy] [-B bind_interface] [-b bind_address]
 ```bash
 [user@]hostname
 ```
+
 or URI format:
+
 ```bash
 ssh://[user@]hostname[:port]
 ```
@@ -100,11 +104,27 @@ ssh://[user@]hostname[:port]
 
 ## 4. Basic Usage
 
-### 4.1 Interactive Shell Connection
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Connect remote shell | `ssh user@192.168.1.100` | Allocates interactive pseudo-terminal (PTY) |
+| Connect on custom port | `ssh -p 2222 user@192.168.1.100` | `-p` specifies remote TCP port |
+| Use explicit private key | `ssh -i ~/.ssh/id_ed25519 user@192.168.1.100` | `-i` selects authentication key file |
+| Execute remote command | `ssh -q user@192.168.1.100 "uptime"` | Runs command remotely without allocating PTY |
+| Local port forwarding | `ssh -N -L 8080:127.0.0.1:80 user@192.168.1.100` | `-L` forwards local port to remote destination |
+| Dynamic SOCKS5 proxy | `ssh -N -D 1080 user@192.168.1.100` | `-D` allocates local SOCKS5 tunnel proxy |
+| Route through jump host | `ssh -J jumpuser@bastion:2222 user@10.0.0.45` | `-J` sets up end-to-end encrypted proxy hop |
+| Force interactive PTY | `ssh -t user@192.168.1.100 "htop"` | `-t` forces terminal allocation for TUI tools |
+
+### 4.2 Interactive Shell Connection
 
 ```bash
 ssh admin@192.168.1.100
 ```
+
+*Sample terminal output:*
+
 ```console
 The authenticity of host '192.168.1.100 (192.168.1.100)' can't be established.
 ED25519 key fingerprint is SHA256:abcd1234efgh5678ijkl9012mnop3456qrst7890uvw.
@@ -115,13 +135,16 @@ Linux web-node-01 6.6.0-amd64 #1 SMP PREEMPT x86_64
 admin@web-node-01:~$
 ```
 
-### 4.2 Non-Interactive Command Execution
+### 4.3 Non-Interactive Command Execution
 
 Executing a command on a remote system and capturing the output locally:
 
 ```bash
 ssh -q admin@192.168.1.100 "uname -r && uptime"
 ```
+
+*Sample terminal output:*
+
 ```text
 6.6.0-amd64
  10:45:02 up 14 days,  3:12,  2 users,  load average: 0.15, 0.08, 0.02
@@ -138,6 +161,7 @@ Forwarding local port `8080` to a remote database management console accessible 
 ```bash
 ssh -N -L 8080:127.0.0.1:80 admin@192.168.1.100
 ```
+
 - **Technical Analysis**: `-N` prevents remote shell spawning; `-L 8080:127.0.0.1:80` opens TCP port `8080` on the client loopback interface. Any connection hitting `localhost:8080` is encrypted across the SSH tunnel and routed to `127.0.0.1:80` from the perspective of the remote server.
 
 ### 5.2 Dynamic SOCKS5 Proxy
@@ -147,6 +171,7 @@ Creating an on-demand SOCKS5 proxy on local port `1080` for secure browsing acro
 ```bash
 ssh -N -D 1080 -C admin@gateway.corp.example.com
 ```
+
 - Applications configured with SOCKS proxy `localhost:1080` route all TCP traffic through `gateway.corp.example.com`.
 
 ### 5.3 Connecting Through an Intermediate Bastion (ProxyJump)
@@ -156,6 +181,7 @@ Connecting directly to an internal node (`10.0.0.45`) through a perimeter bastio
 ```bash
 ssh -J deploy@bastion.corp.example.com:2222 appuser@10.0.0.45
 ```
+
 - **Technical Analysis**: `-J` establishes an end-to-end encrypted channel between your client and `10.0.0.45`; the intermediate bastion acts strictly as a TCP forwarder and cannot inspect payload traffic.
 
 ### 5.4 Remote Interactive Session with Forced PTY Allocation
@@ -165,6 +191,7 @@ Running interactive curses programs like `htop` in non-login contexts:
 ```bash
 ssh -t admin@192.168.1.100 "htop"
 ```
+
 - Without `-t`, `ssh` detects non-interactive invocation, omits PTY allocation, and curses applications fail with `"Error opening terminal"`.
 
 ---
@@ -176,6 +203,7 @@ ssh -t admin@192.168.1.100 "htop"
 Connection setup introduces latency due to TCP handshakes, TLS/SSH key exchanges, and authentication rounds. Multiplexing allows multiple concurrent `ssh` sessions to share a single established TCP connection.
 
 Configure in `~/.ssh/config`:
+
 ```ini
 Host *
     ControlMaster auto
@@ -184,9 +212,13 @@ Host *
 ```
 
 Testing connection reuse:
+
 ```bash
 ssh -O check admin@192.168.1.100
 ```
+
+*Sample terminal output:*
+
 ```text
 Master running (pid=45123)
 ```
@@ -242,33 +274,45 @@ Host internal-cluster-*
 
 ### 8.1 Key Hygiene & Algorithm Deprecations
 
-- **Deprecated Algorithms**: OpenSSH upstream has disabled DSA keys and deprecated SHA-1 signatures (`ssh-rsa`). Ed25519 (`id_ed25519`) or ECDSA (`id_ecdsa`) should be used exclusively.
-- **Host Key Verification**: Disabling `StrictHostKeyChecking=no` or redirecting `UserKnownHostsFile=/dev/null` exposes sessions to Man-in-the-Middle (MITM) attacks.
+> [!WARNING]
+> **Host Key Verification**: Disabling `StrictHostKeyChecking=no` or redirecting `UserKnownHostsFile=/dev/null` strips cryptographic trust verification, exposing connection credentials to active Man-in-the-Middle (MITM) attacks.
+
+> [!NOTE]
+> **Deprecated Cryptosystems**: OpenSSH upstream has disabled DSA keys and deprecated SHA-1 signatures (`ssh-rsa`). Ed25519 (`id_ed25519`) or ECDSA (`id_ecdsa`) should be used exclusively.
 
 ### 8.2 Agent Forwarding Risks
 
-- The `-A` flag enables agent forwarding, allowing the remote host to request signatures from your local `ssh-agent`. If the remote server is compromised, a root user on that server can hijack your agent socket to authenticate to other servers on your network.
-- **Upstream Recommendation**: Never use agent forwarding (`-A`) across untrusted hosts. Use `ProxyJump` (`-J`) instead.
+> [!CAUTION]
+> **Agent Hijacking Risk**: The `-A` flag enables agent forwarding, allowing the remote host to request signatures from your local `ssh-agent`. If the remote server is compromised, root users on that system can hijack your forwarded agent socket to authenticate across your network. Never use agent forwarding (`-A`) across untrusted hosts; use `ProxyJump` (`-J`) instead.
 
 ---
 
 ## 9. Best Practices
 
 1. **Adopt Ed25519 as Default Public Key Cryptosystem**:
-   - *Guidance*: Generate client keys using `ssh-keygen -t ed25519`.
-   - *Authoritative Justification*: OpenSSH security documentation identifies Ed25519 as providing compact 256-bit keys with superior resistance to side-channel attacks compared to RSA.
+   > [!TIP]
+   > *Guidance*: Generate client keys using `ssh-keygen -t ed25519`.
+   > *Authoritative Justification*: OpenSSH security documentation identifies Ed25519 as providing compact 256-bit keys with superior resistance to side-channel attacks compared to RSA.
+
 2. **Employ ProxyJump (`-J`) for Bastion Access**:
-   - *Guidance*: Route traffic via `-J bastion` instead of opening intermediate interactive shells or forwarding agents.
-   - *Authoritative Justification*: Upstream documentation explains that `-J` creates an end-to-end encrypted TCP forward, isolating keys and credentials from intermediate nodes.
+   > [!IMPORTANT]
+   > *Guidance*: Route traffic via `-J bastion` instead of opening intermediate interactive shells or forwarding agents.
+   > *Authoritative Justification*: Upstream documentation explains that `-J` creates an end-to-end encrypted TCP forward, isolating keys and credentials from intermediate nodes.
+
 3. **Use ControlMaster for Automated CI/CD Pipelines**:
-   - *Guidance*: Enable `ControlPersist` in automation environments that issue frequent successive commands to identical targets.
-   - *Authoritative Justification*: Eliminates repetitive public key cryptographic handshakes, reducing server CPU utilization and latency.
+   > [!TIP]
+   > *Guidance*: Enable `ControlPersist` in automation environments that issue frequent successive commands to identical targets.
+   > *Authoritative Justification*: Eliminates repetitive public key cryptographic handshakes, reducing server CPU utilization and latency.
+
 4. **Enforce Strict Permissions on Configuration Files**:
-   - *Guidance*: Enforce `chmod 700 ~/.ssh` and `chmod 600 ~/.ssh/*`.
-   - *Authoritative Justification*: OpenSSH strictly aborts if private keys or configuration files are accessible by group or world users.
+   > [!IMPORTANT]
+   > *Guidance*: Enforce `chmod 700 ~/.ssh` and `chmod 600 ~/.ssh/*`.
+   > *Authoritative Justification*: OpenSSH strictly aborts if private keys or configuration files are accessible by group or world users.
+
 5. **Disable Pseudo-Terminal for Non-Interactive Pipelines**:
-   - *Guidance*: Use `ssh -T` when piping raw binary data or streaming backups.
-   - *Authoritative Justification*: Prevents newline translation (`CR/LF` munging) and carriage-return artifacts introduced by terminal drivers.
+   > [!TIP]
+   > *Guidance*: Use `ssh -T` when piping raw binary data or streaming backups.
+   > *Authoritative Justification*: Prevents newline translation (`CR/LF` munging) and carriage-return artifacts introduced by terminal drivers.
 
 ---
 
