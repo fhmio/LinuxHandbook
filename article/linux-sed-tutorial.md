@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `GNU Sed 4.9` | **POSIX**: `POSIX.1-2024 (with GNU extensions)` | **Safety Tier**: `unprivileged-filesystem-write` | **Scope**: `Stream editing, in-place regex replacement (-i) & text transformations`
+
 `sed` (stream editor) is a non-interactive text editor that processes input streams line by line according to an execution cycle. It applies user-defined commands (such as substitutions, deletions, insertions, and branch logic) to an internal pattern buffer, writing transformed results to standard output or updating files in place.
 
 - **Upstream Project & Provenance**: Developed and maintained under **GNU Sed** (`sed`).
@@ -69,16 +71,33 @@ sed [OPTION]... -f script-file... [input-file]...
 
 ## 4. Basic Usage
 
-### 4.1 Simple String Substitution
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| First match substitution | `sed 's/foo/bar/' file.txt` | Replaces first occurrence per line |
+| Global substitution | `sed 's/foo/bar/g' file.txt` | Replaces all occurrences per line |
+| In-place edit with backup | `sed -i.bak 's/old/new/g' config.conf` | Modifies file and saves `config.conf.bak` |
+| Filter and print matches only | `sed -n '/ERROR/p' app.log` | `-n` suppresses auto-print; `p` prints matches |
+| Delete matching lines | `sed '/^#/d' config.conf` | `d` drops lines matching pattern |
+| Delete blank lines | `sed '/^$/d' input.txt` | Deletes empty lines |
+| Print line number range | `sed -n '10,20p' file.txt` | Prints lines 10 through 20 |
+| Replace using custom delimiter | `sed 's\|/var/www\|/srv/www\|g' file` | Avoids escaping `/` forward slashes |
+| Extended regex substitution | `sed -E 's/([0-9]+)/[\1]/g' file` | `-E` supports modern regex groupings without `\(` |
+
+### 4.2 Simple String Substitution
 
 ```bash
 echo "Server status: offline" | sed 's/offline/online/'
 ```
+
+*Sample terminal output:*
+
 ```text
 Server status: online
 ```
 
-### 4.2 Suppressing Default Output with `-n` and `/p`
+### 4.3 Suppressing Default Output with -n and /p
 
 Printing only lines that match a regular expression:
 
@@ -97,6 +116,7 @@ Updating a configuration directive in `/etc/default/ufw` with a timestamped back
 ```bash
 sed -i.bak 's/^IPV6=no/IPV6=yes/' /etc/default/ufw
 ```
+
 - **Technical Analysis**: `-i.bak` writes changes to `/etc/default/ufw` while saving the pre-modified original file as `/etc/default/ufw.bak`.
 
 ### 5.2 Global Substitution with Custom Delimiters
@@ -114,6 +134,7 @@ Filtering out comments and whitespace lines:
 ```bash
 sed -E '/^[[:space:]]*(#|$)/d' /etc/redis/redis.conf | head -n 5
 ```
+
 - **Technical Analysis**: Matches lines where the first non-whitespace character is `#` or the end of the line (`$`), and executes the `d` (delete) command.
 
 ### 5.4 Slicing Specific Line Ranges
@@ -139,9 +160,13 @@ node2 \
 node3"
 EOF
 ```
+
+*Sample terminal output:*
+
 ```text
 HOSTS="node1 node2 node3"
 ```
+
 - `:a`: Defines branch label `a`.
 - `N`: Appends the next line to pattern space.
 - `s/\\\n//`: Strips the backslash and newline.
@@ -162,37 +187,36 @@ HOSTS="node1 node2 node3"
 
 ## 8. Safety, Security, and Portability
 
-### 8.1 Critical Portability Trap: GNU `sed -i` vs macOS/BSD `sed -i`
+### 8.1 Critical Portability Trap: GNU sed -i vs macOS/BSD sed -i
 
-- In **GNU `sed`**, the backup suffix is optional:
-  ```bash
-  sed -i 's/foo/bar/' file       # Valid in GNU sed
-  sed -i.bak 's/foo/bar/' file   # Valid in GNU sed
-  ```
-- In **BSD/macOS `sed`**, `-i` **requires** an extension argument:
-  ```bash
-  sed -i '' 's/foo/bar/' file    # Valid in macOS/BSD
-  ```
-  Running `sed -i 's/foo/bar/' file` on macOS treats `'s/foo/bar/'` as the backup extension and `file` as the script, causing errors or corrupted filenames.
+> [!WARNING]
+> **In-Place Flag Incompatibility Hazard**:
+> - **GNU `sed`**: The backup extension argument is optional (`sed -i 's/foo/bar/' file` works without backup; `sed -i.bak` creates a backup).
+> - **BSD/macOS `sed`**: The backup argument is **mandatory**. Passing `sed -i 's/foo/bar/' file` on macOS treats `'s/foo/bar/'` as the backup extension and `file` as the script, causing errors or corrupted files. On BSD/macOS, an explicit empty string `sed -i '' 's/foo/bar/' file` is required.
 
-### 8.2 In-Place Editing Inode Behavior
+### 8.2 In-Place Editing Inode Replacement
 
-- GNU `sed -i` creates a temporary file in the same directory and renames it over the original file.
-- **Consequence**: The file's inode number changes, breaking existing hard links. File ownership is retained, but symlinks are replaced with normal files unless `--follow-symlinks` is specified.
+> [!IMPORTANT]
+> When `sed -i` modifies a file, it creates a temporary file in the same directory and renames it over the original file. This changes the file's **inode number**, breaking existing hard links and replacing symlinks with regular files unless `--follow-symlinks` is passed.
 
 ---
 
 ## 9. Best Practices
 
 1. **Always Supply an Extension to `-i` in Production**:
-   - *Guidance*: Write `sed -i.bak '...' file` when modifying production configurations.
-   - *Authoritative Justification*: Provides an instantaneous rollback file in the event of an erroneous regex match.
+   > [!IMPORTANT]
+   > *Guidance*: Write `sed -i.bak '...' file` when modifying production configurations.
+   > *Authoritative Justification*: Provides an instantaneous rollback file in the event of an erroneous regex match.
+
 2. **Use Alternative Delimiters (`|` or `#`) for Paths**:
-   - *Guidance*: Avoid escaping slashes; write `s|old|new|` instead of `s/\/old/\/new\/`.
-   - *Authoritative Justification*: GNU documentation notes that any single character can serve as the delimiter in `s` commands.
+   > [!TIP]
+   > *Guidance*: Avoid escaping slashes; write `s|old|new|` instead of `s/\/old/\/new\/`.
+   > *Authoritative Justification*: GNU documentation notes that any single character can serve as the delimiter in `s` commands.
+
 3. **Use `-E` for Modern Readable Regular Expressions**:
-   - *Guidance*: Pass `-E` to avoid backslash escaping on `(`, `)`, `+`, and `{}`.
-   - *Authoritative Justification*: Standardized in POSIX.1-2024 and natively supported across all modern versions of GNU and BSD sed.
+   > [!TIP]
+   > *Guidance*: Pass `-E` to avoid backslash escaping on `(`, `)`, `+`, and `{}`.
+   > *Authoritative Justification*: Standardized in POSIX.1-2024 and natively supported across all modern versions of GNU and BSD sed.
 
 ---
 
