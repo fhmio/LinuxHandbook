@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: procps-ng 4.0.4 | **POSIX**: De-facto Standard (Not POSIX standardized) | **Safety Tier**: safe-read-only | **Scope**: process-search
+
 `pgrep` searches the currently running processes and outputs the process IDs (PIDs) matching specified selection criteria to standard output. It eliminates the need for fragile pipelines like `ps aux | grep name | awk '{print $2}'`.
 
 - **Upstream Project & Provenance**: Maintained within **procps-ng** (`procps-ng`).
@@ -69,7 +71,19 @@ pgrep [options] pattern
 
 ## 4. Basic Usage
 
-### 4.1 Finding PIDs by Name
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Find PIDs by name | `pgrep nginx` | Substring match against binary name |
+| Exact name match | `pgrep -x sshd` | Avoids substring false positives |
+| List PID and command name | `pgrep -l nginx` | Prints PID and short binary name |
+| Match full command line | `pgrep -fa "app.py"` | Inspects argument vector and prints full command |
+| Filter by username | `pgrep -u www-data php-fpm` | Restricts search to user's processes |
+| Count matching processes | `pgrep -c nginx` | Returns numeric count of matches |
+| Comma-delimited list | `pgrep -d, worker` | Generates PID list for `top -p` or `kill` |
+
+### 4.2 Finding PIDs by Name
 
 ```bash
 pgrep nginx
@@ -80,7 +94,7 @@ pgrep nginx
 4514
 ```
 
-### 4.2 Listing PIDs Alongside Binary Names
+### 4.3 Listing PIDs Alongside Binary Names
 
 ```bash
 pgrep -l sshd
@@ -140,7 +154,8 @@ top -p $(pgrep -d, nginx)
 
 ### 6.1 Avoiding the Self-Matching Trap of `ps | grep`
 
-When running `ps aux | grep nginx`, the `grep` command itself often appears in the output because `grep` contains the word `nginx`. `pgrep` never matches its own process.
+> [!TIP]
+> **No Self-Matching**: Unlike `ps aux | grep nginx` (which matches the running `grep` process itself unless filtered), `pgrep` automatically excludes its own PID from search results.
 
 ---
 
@@ -168,7 +183,8 @@ fi
 
 ### 8.1 Truncated Comm Names
 
-On Linux, `/proc/[pid]/comm` is limited to 15 characters. If an executable name exceeds 15 characters, standard `pgrep` without `-f` only matches against the first 15 characters. Use `-f` for long process names.
+> [!NOTE]
+> Linux limits the kernel task comm field (`/proc/[pid]/comm`) to 15 characters. If an executable name exceeds 15 characters, standard `pgrep` matches against the truncated name. Pass `-f` to match against the full command line from `/proc/[pid]/cmdline`.
 
 ---
 
