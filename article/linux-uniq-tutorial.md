@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: GNU Coreutils 9.11 | **POSIX**: POSIX.1-2024 (with GNU extensions) | **Safety Tier**: safe-read-only | **Scope**: text-processing
+
 `uniq` filters out or reports repeated adjacent lines in an input stream. Because `uniq` only compares contiguous lines, input streams are typically pre-sorted with `sort` before processing.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -71,7 +73,19 @@ uniq [OPTION]... [INPUT [OUTPUT]]
 
 ## 4. Basic Usage
 
-### 4.1 Basic Deduplication
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Remove adjacent duplicates | `uniq input.txt` | Collapses consecutive duplicate lines |
+| Count line occurrences | `uniq -c sorted.txt` | Prefixes lines with occurrence counts |
+| Show only duplicate lines | `uniq -d sorted.txt` | Prints lines that appear 2+ times (one copy) |
+| Show only unique lines | `uniq -u sorted.txt` | Prints lines that appear strictly once |
+| Case-insensitive deduplication | `uniq -i sorted.txt` | Treats upper and lower case as identical |
+| Skip leading columns | `uniq -f 2 sorted.txt` | Ignores first 2 whitespace-separated fields |
+| Sort and deduplicate | `sort file.txt \| uniq` | Standard pipeline for unsorted input |
+
+### 4.2 Basic Deduplication
 
 ```bash
 cat <<'EOF' | uniq
@@ -87,7 +101,7 @@ beta
 gamma
 ```
 
-### 4.2 Counting Frequencies with `-c`
+### 4.3 Counting Frequencies with `-c`
 
 ```bash
 cat <<'EOF' | uniq -c
@@ -177,15 +191,13 @@ EOF
 
 ### 8.1 Sorting Prerequisite
 
-Failing to sort input before piping into `uniq` is a common administrative bug:
-```bash
-# INCORRECT: leaves duplicates scattered across the file
-uniq raw_log.txt
+> [!IMPORTANT]
+> `uniq` only detects and removes **adjacent** duplicate lines. If an input file is not pre-sorted, identical lines scattered throughout the file will not be collapsed. Always pipe through `sort` first or use `sort -u`.
 
-# CORRECT: guarantees full deduplication
+```bash
 sort raw_log.txt | uniq
 ```
-Alternatively, `sort -u` can perform sorting and deduplication in a single process.
+Alternatively, `sort -u` can perform sorting and deduplication in a single process without spawning `uniq`.
 
 ---
 
