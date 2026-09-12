@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: util-linux (util-linux 2.40) | **POSIX**: Linux-Specific (util-linux extension) | **Safety Tier**: privileged-system-destructive | **Scope**: partition-table-manipulation
+
 `fdisk` is a dialog-driven and scriptable partition table manipulator for block devices. It inspects, creates, alters, and deletes partitions on disks formatted with GUID Partition Table (GPT), Master Boot Record (MBR/DOS), Sun, or SGI partition schemes.
 
 - **Upstream Project & Provenance**: Maintained within **util-linux** under the `fdisks` subsystem, built upon `libfdisk`.
@@ -86,12 +88,28 @@ fdisk -l [device...]
 
 ## 4. Basic Usage
 
-### 4.1 Listing All Partition Tables
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| List all partition tables | `fdisk -l` | `sudo fdisk -l` | Read-only scan of all detected block devices |
+| Inspect specific disk | `fdisk -l [device]` | `sudo fdisk -l /dev/sda` | Target single drive without flooding terminal |
+| Interactive partitioner | `fdisk [device]` | `sudo fdisk /dev/sdb` | Opens in-memory staging session (commit with `w`) |
+| Backup partition table | `sfdisk -d [device]` | `sudo sfdisk -d /dev/sda > sda_backup.dump` | Generates textual, restorable partition layout |
+| Restore partition backup | `sfdisk [device] < [file]` | `sudo sfdisk /dev/sda < sda_backup.dump` | Restores partition table from sfdisk dump |
+| Force kernel re-read | `partx -u [partition] [device]` | `sudo partx -u /dev/sdc1 /dev/sdc` | Informs kernel of partition changes without reboot |
+
+### 4.2 Listing All Partition Tables
 
 Query all system block storage devices in read-only mode using `-l`:
 
+```bash
+sudo fdisk -l
+```
+
+Output:
+
 ```console
-$ sudo fdisk -l
 Disk /dev/sda: 476.94 GiB, 512110190592 bytes, 1000215216 sectors
 Disk model: Samsung SSD 980 500GB
 Units: sectors of 1 * 512 = 512 bytes
@@ -106,12 +124,17 @@ Device         Start        End   Sectors   Size Type
 /dev/sda3    3147776 1000214527 997066752 475.4G Linux LVM
 ```
 
-### 4.2 Querying a Specific Block Device
+### 4.3 Querying a Specific Block Device
 
 Target a single drive without listing unrelated devices:
 
+```bash
+sudo fdisk -l /dev/sdb
+```
+
+Output:
+
 ```console
-$ sudo fdisk -l /dev/sdb
 Disk /dev/sdb: 1.82 TiB, 2000398934016 bytes, 3907029168 sectors
 Disk model: WDC WD20EZAZ-00L
 Units: sectors of 1 * 512 = 512 bytes
@@ -130,11 +153,15 @@ Device     Start        End    Sectors  Size Type
 
 ### 5.1 Interactive Partitioning Workflow (Creating a GPT Partition)
 
-To initialize a raw storage disk `/dev/sdc` with a GPT label and a single partition:
+To initialize a raw storage disk `/dev/sdc` with a GPT label and a single partition, open the interactive staging session:
+
+```bash
+sudo fdisk /dev/sdc
+```
+
+Interactive dialogue sequence:
 
 ```console
-$ sudo fdisk /dev/sdc
-
 Welcome to fdisk (util-linux 2.40).
 Changes will remain in memory only, until you decide to write them.
 Be careful before using the write command.
@@ -167,9 +194,13 @@ Syncing disks.
 
 Change the type identifier of partition 1 to Linux swap:
 
-```console
-$ sudo fdisk /dev/sdc
+```bash
+sudo fdisk /dev/sdc
+```
 
+Interactive session dialogue:
+
+```console
 Command (m for help): t
 Partition number (1, default 1): 1
 Partition type or alias (type L to list all): swap
@@ -186,9 +217,13 @@ Syncing disks.
 
 Remove an unwanted partition from the in-memory staging table:
 
-```console
-$ sudo fdisk /dev/sdc
+```bash
+sudo fdisk /dev/sdc
+```
 
+Interactive session dialogue:
+
+```console
 Command (m for help): d
 Partition number (1, default 1): 1
 Partition 1 has been deleted.
@@ -280,7 +315,8 @@ sudo fdisk -l /dev/sda | awk '$1 ~ /\/dev\// {print $1, $2, ($2 % 2048 == 0 ? "A
 
 ### 8.1 Destructive Impact and Execution Safety
 
-`fdisk` modifies low-level disk structures. Writing to the wrong device (`/dev/sda` instead of `/dev/sdb`) permanently overwrites partition headers, filesystem superblocks, and boot records. Always double-check target device names with `lsblk` before running `fdisk`.
+> [!CAUTION]
+> **Destructive Partition Table Alterations**: `fdisk` operates directly on low-level disk structures. Specifying the wrong target drive (e.g. `/dev/nvme0n1` or `/dev/sda` instead of `/dev/sdb`) permanently overwrites partition headers, filesystem superblocks, and boot records upon issuing `w`. Always verify target device paths using `lsblk` before committing changes.
 
 ### 8.2 Privilege Boundaries
 
@@ -288,7 +324,8 @@ Modifying partition tables requires `CAP_SYS_ADMIN` capability, typically achiev
 
 ### 8.3 Signature Wiping Safeguards
 
-Modern `fdisk` automatically detects existing filesystem or RAID signatures on sectors assigned to new partitions. It prompts before wiping existing signatures to prevent accidental data destruction:
+> [!NOTE]
+> Modern `fdisk` automatically detects existing filesystem or RAID signatures on sectors assigned to new partitions. It prompts before wiping existing signatures to prevent accidental data destruction:
 
 ```text
 Created a new partition 1 of type 'Linux filesystem' and of size 50 GiB.
@@ -301,6 +338,9 @@ Do you want to remove the signature? [Y]es/[N]o:
 ## 9. Best Practices
 
 ### 9.1 Always Back Up Partition Tables Before Modification
+
+> [!TIP]
+> **Always Backup Partition Tables**: Always dump the existing partition table prior to running `fdisk` to enable instantaneous rollback if an error occurs.
 
 *Upstream Rationale*: `fdisk(8)` and `sfdisk(8)` manuals emphasize that partition table changes can result in unbootable systems or lost partition boundaries. Always dump the existing partition table prior to running `fdisk`:
 
