@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `OpenSSH 10.5` | **POSIX**: `None (OpenSSH standard)` | **Safety Tier**: `safe-read-only` | **Scope**: `Authentication key loading, cache auditing & agent locking`
+
 `ssh-add` is the user-space utility used to inspect, load, and manage private keys in an active `ssh-agent(1)` process. It decrypts private key files using passphrases and uploads the unencrypted key data to the agent daemon memory.
 
 - **Upstream Project & Provenance**: Core client utility in OpenSSH (`openssh-clients`).
@@ -71,30 +73,53 @@ It prompts the user for passphrases on the controlling TTY (or via `SSH_ASKPASS`
 
 ## 4. Basic Usage
 
-### 4.1 Loading the Default Identity Key
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Add default SSH keys | `ssh-add` | Loads `~/.ssh/id_*` keys after passphrase entry |
+| Add specific private key | `ssh-add ~/.ssh/id_ed25519` | Adds targeted private key file |
+| List loaded key fingerprints | `ssh-add -l` | Lists key lengths, SHA256 hashes, and comments |
+| List loaded full public keys | `ssh-add -L` | Prints complete OpenSSH public key strings |
+| Add key with expiration | `ssh-add -t 1h ~/.ssh/id_prod` | `-t` sets lifetime limit (e.g. 1 hour) |
+| Add key with confirmation | `ssh-add -c ~/.ssh/id_root` | `-c` requires user prompt before each use |
+| Remove specific key | `ssh-add -d ~/.ssh/id_ed25519.pub` | `-d` removes target identity from agent |
+| Purge all identities | `ssh-add -D` | `-D` clears all cached keys from memory |
+| Lock agent with password | `ssh-add -x` | `-x` locks agent memory until `-X` unlock |
+
+### 4.2 Loading the Default Identity Key
 
 ```bash
 ssh-add
 ```
+
+*Sample terminal output:*
+
 ```console
 Enter passphrase for /home/admin/.ssh/id_ed25519: 
 Identity added: /home/admin/.ssh/id_ed25519 (admin@corp.example.com)
 ```
 
-### 4.2 Listing Currently Loaded Keys
+### 4.3 Listing Currently Loaded Keys
 
 ```bash
 ssh-add -l
 ```
+
+*Sample terminal output:*
+
 ```text
 256 SHA256:7fK2m9W81XzpBqLa39XjN1sK21vL3p0kZqA7w9eF1m8 admin@corp.example.com (ED25519)
 ```
 
-### 4.3 Purging All Loaded Keys
+### 4.4 Purging All Loaded Keys
 
 ```bash
 ssh-add -D
 ```
+
+*Sample terminal output:*
+
 ```text
 All identities removed.
 ```
@@ -110,6 +135,9 @@ Loading a production key that automatically purges from memory after 1 hour (360
 ```bash
 ssh-add -t 1h ~/.ssh/id_prod_ed25519
 ```
+
+*Sample terminal output:*
+
 ```console
 Enter passphrase for /home/admin/.ssh/id_prod_ed25519:
 Identity added: /home/admin/.ssh/id_prod_ed25519 (id_prod_ed25519)
@@ -123,6 +151,7 @@ Loading a high-privilege key that prompts an interactive confirmation dialog eve
 ```bash
 ssh-add -c ~/.ssh/id_root_ed25519
 ```
+
 - Every time `ssh` attempts to use this key, `ssh-askpass` pops up asking: *"Allow use of key /home/admin/.ssh/id_root_ed25519?"*.
 
 ### 5.3 Locking the Agent When Stepping Away
@@ -132,6 +161,9 @@ Locking the agent memory before leaving a physical workstation:
 ```bash
 ssh-add -x
 ```
+
+*Sample terminal output:*
+
 ```console
 Enter lock password: 
 Enter lock password again: 
@@ -139,9 +171,13 @@ Agent locked.
 ```
 
 Unlocking upon return:
+
 ```bash
 ssh-add -X
 ```
+
+*Sample terminal output:*
+
 ```console
 Enter lock password: 
 Agent unlocked.
@@ -158,6 +194,9 @@ OpenSSH supports discovering keys stored directly on hardware tokens (such as Yu
 ```bash
 ssh-add -K
 ```
+
+*Sample terminal output:*
+
 ```text
 Enter PIN for authenticator:
 Identity added from token: /home/admin/.ssh/id_ed25519_sk_rk (FIDO token)
@@ -170,6 +209,7 @@ In OpenSSH 8.9+, `ssh-add` allows restricting the maximum number of signatures a
 ```bash
 ssh-add -M 5 ~/.ssh/id_deploy
 ```
+
 - The key is invalidated and purged after 5 authentication attempts, preventing persistent exploitation.
 
 ---
@@ -195,25 +235,39 @@ ssh-add -M 5 ~/.ssh/id_deploy
 
 ### 8.1 Protection Against Silent Hijacking
 
-- If an attacker gains shell access as your user, they can execute `ssh` commands that use keys cached in `ssh-agent` without entering passphrases.
-- Adding keys with `-c` (confirmation required) completely mitigates silent background abuse because every signature requires an affirmative UI click.
+> [!WARNING]
+> **Silent Background Key Abuse**: Any local process running as your user ID can connect to `SSH_AUTH_SOCK` and generate authentication signatures without knowing your private key passphrase.
+>
+> Adding sensitive keys with the `-c` confirmation flag completely mitigates silent background abuse by requiring an explicit graphical or console confirmation dialog before any signature is issued.
+
+### 8.2 Workstation Lock Defense
+
+> [!NOTE]
+> **Agent Locking Without Key Purge**: `ssh-add -x` locks the agent with a temporary password. The agent retains the decrypted keys in RAM but blocks all signature requests until unlocked with `ssh-add -X`.
 
 ---
 
 ## 9. Best Practices
 
 1. **Always Set Lifetimes on Administrative Keys**:
-   - *Guidance*: Load keys using `ssh-add -t <duration>` (e.g., `ssh-add -t 2h`).
-   - *Authoritative Justification*: OpenSSH manual states that identities with a set lifetime are automatically removed by the agent upon expiration.
+   > [!TIP]
+   > *Guidance*: Load keys using `ssh-add -t <duration>` (e.g., `ssh-add -t 2h`).
+   > *Authoritative Justification*: OpenSSH manual states that identities with a set lifetime are automatically removed by the agent upon expiration.
+
 2. **Use `-c` for Sensitive Production Keys**:
-   - *Guidance*: Add bastion and root deployment keys with `ssh-add -c`.
-   - *Authoritative Justification*: Prevents rogue background scripts from issuing unauthorized signatures through the agent socket.
+   > [!IMPORTANT]
+   > *Guidance*: Add bastion and root deployment keys with `ssh-add -c`.
+   > *Authoritative Justification*: Prevents rogue background scripts from issuing unauthorized signatures through the agent socket.
+
 3. **Lock the Agent (`ssh-add -x`) on Inactive Workstations**:
-   - *Guidance*: Integrate `ssh-add -x` into desktop screen locker hooks.
-   - *Authoritative Justification*: Freezes signature generation while preserving loaded keys in memory without requiring full passphrase re-entry.
+   > [!TIP]
+   > *Guidance*: Integrate `ssh-add -x` into desktop screen locker hooks.
+   > *Authoritative Justification*: Freezes signature generation while preserving loaded keys in memory without requiring full passphrase re-entry.
+
 4. **Purge Identities When Finished**:
-   - *Guidance*: Run `ssh-add -D` at the end of maintenance windows.
-   - *Authoritative Justification*: Clears in-memory cryptographic credentials.
+   > [!TIP]
+   > *Guidance*: Run `ssh-add -D` at the end of maintenance windows.
+   > *Authoritative Justification*: Clears in-memory cryptographic credentials.
 
 ---
 
