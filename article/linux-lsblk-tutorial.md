@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: util-linux 2.40 | **POSIX**: Linux-Specific (util-linux extension) | **Safety Tier**: safe-read-only | **Scope**: block-device-inspection
+
 `lsblk` lists information about all available or specified block devices. It interrogates the Linux `sysfs` filesystem (`/sys/block`, `/sys/class/block`) and the `udev` database, rendering hierarchical tree relationships between physical disks, partitions, LVM logical volumes, Software RAID arrays, and loop devices.
 
 - **Upstream Project & Provenance**: Maintained within **util-linux** as part of the core `misc-utils` toolchain.
@@ -83,12 +85,26 @@ lsblk [options] [device...]
 
 ## 4. Basic Usage
 
-### 4.1 Default Storage Tree
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| List block device tree | `lsblk` | Default hierarchy of disks, partitions, LVM |
+| Filesystems and UUIDs | `lsblk -f` | Displays FSTYPE, LABEL, UUID, mountpoints |
+| Physical disks only | `lsblk -d -o NAME,MODEL,SIZE,ROTA,TRAN` | Suppresses partitions; shows drive specs |
+| Exclude loop devices | `lsblk -e 7` | Cleans clutter from snap/container mounts |
+| Machine-readable JSON | `lsblk -J -o NAME,SIZE,TYPE,MOUNTPOINTS` | Structured JSON output for automation |
+| Exact byte sizing | `lsblk -b -o NAME,SIZE` | Outputs raw integer bytes without unit suffixes |
+| SSD TRIM / discard support | `lsblk -D` | Audits hardware TRIM and unmap capabilities |
+
+### 4.2 Default Storage Tree
 
 Running `lsblk` without parameters displays all non-empty block devices with their default attributes (`NAME`, `MAJ:MIN`, `RM`, `SIZE`, `RO`, `TYPE`, `MOUNTPOINTS`):
 
+```bash
+lsblk
+```
 ```console
-$ lsblk
 NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
 sda           8:0    0 476.9G  0 disk 
 ├─sda1        8:1    0   512M  0 part /boot/efi
@@ -101,12 +117,14 @@ sdb           8:16   0   1.8T  0 disk
 sr0          11:0    1  1024M  0 rom  
 ```
 
-### 4.2 Inspecting a Specific Disk
+### 4.3 Inspecting a Specific Disk
 
 Target a specific drive to isolate its partition scheme and volume groups:
 
+```bash
+lsblk /dev/sda
+```
 ```console
-$ lsblk /dev/sda
 NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
 sda           8:0    0 476.9G  0 disk 
 ├─sda1        8:1    0   512M  0 part /boot/efi
@@ -124,8 +142,10 @@ sda           8:0    0 476.9G  0 disk
 
 Use `-f` (`--fs`) to audit filesystems, volume labels, and UUID identifiers across all partitions:
 
+```bash
+lsblk -f
+```
 ```console
-$ lsblk -f
 NAME        FSTYPE      FSVER LABEL       UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
 sda                                                                                           
 ├─sda1      vfat        FAT32 BOOT_EFI    4A2F-89E1                             504.9M     1% /boot/efi
@@ -141,8 +161,10 @@ sdb
 
 When performing hardware inventory, identify physical drives, transport types, and rotation status using `-d` (`--nodeps`):
 
+```bash
+lsblk -d -o NAME,MODEL,SIZE,ROTA,TRAN,TYPE
+```
 ```console
-$ lsblk -d -o NAME,MODEL,SIZE,ROTA,TRAN,TYPE
 NAME  MODEL                SIZE ROTA TRAN   TYPE
 sda   Samsung SSD 980 500G 476.9G    0 nvme   disk
 sdb   WDC WD20EZAZ-00L9GB0   1.8T    1 sata   disk
@@ -153,8 +175,10 @@ sdb   WDC WD20EZAZ-00L9GB0   1.8T    1 sata   disk
 
 Verify whether attached block storage devices support TRIM/discard operations via `-D` (`--discard`):
 
+```bash
+lsblk -D
+```
 ```console
-$ lsblk -D
 NAME        DISC-ALN DISC-GRAN DISC-MAX DISC-ZERO
 sda                0      512B       2G         0
 ├─sda1             0      512B       2G         0
@@ -170,8 +194,10 @@ sdb                0        0B       0B         0
 
 Systems running `snapd` or container runtimes often display dozens of `/dev/loop` devices. Suppress them by excluding major device number `7`:
 
+```bash
+lsblk -e 7
+```
 ```console
-$ lsblk -e 7
 NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
 sda      8:0    0 476.9G  0 disk 
 ├─sda1   8:1    0   512M  0 part /boot/efi
@@ -186,8 +212,10 @@ sda      8:0    0 476.9G  0 disk
 
 Export comprehensive block device topology directly to JSON format with `-J` (`--json`):
 
-```console
-$ lsblk -J -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS /dev/sda1
+```bash
+lsblk -J -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS /dev/sda1
+```
+```json
 {
    "blockdevices": [
       {
@@ -206,7 +234,6 @@ $ lsblk -J -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS /dev/sda1
 Parse and query storage topology using `jq`:
 
 ```bash
-# Retrieve all mountpoints backed by ext4 filesystems
 lsblk -J -o NAME,FSTYPE,MOUNTPOINTS | jq -r '.blockdevices[] | .. | objects | select(.fstype=="ext4") | .mountpoints[]'
 ```
 
@@ -214,8 +241,10 @@ lsblk -J -o NAME,FSTYPE,MOUNTPOINTS | jq -r '.blockdevices[] | .. | objects | se
 
 Generate unambiguous key-value pairs formatted with `-P` (`--pairs`):
 
-```console
-$ lsblk -P -o NAME,SIZE,TYPE,UUID /dev/sda1
+```bash
+lsblk -P -o NAME,SIZE,TYPE,UUID /dev/sda1
+```
+```text
 NAME="sda1" SIZE="512M" TYPE="part" UUID="4A2F-89E1"
 ```
 
@@ -232,8 +261,10 @@ done < <(lsblk -P -o NAME,SIZE,UUID -n -p /dev/sda*)
 
 For exact partitioning calculations, suppress human-friendly unit suffixes (`G`, `M`) and output raw integer byte counts with `-b`:
 
-```console
-$ lsblk -b -n -o NAME,SIZE /dev/sda1
+```bash
+lsblk -b -n -o NAME,SIZE /dev/sda1
+```
+```text
 sda1 536870912
 ```
 
@@ -270,11 +301,13 @@ sda1 536870912
 
 ### 8.1 Read-Only Operation
 
-`lsblk` performs non-destructive read operations against `sysfs`, `udev`, and block device headers. It requires no elevated (`root`) privileges for standard device discovery, although reading low-level labels from restricted devices may require `sudo` if permissions on `/dev` nodes are restricted.
+> [!NOTE]
+> `lsblk` is a completely non-destructive query tool. It gathers block device metadata directly from `sysfs` and `udev` without writing to or locking storage media, and operates safely under unprivileged accounts.
 
 ### 8.2 Safe Identification Before Destructive Operations
 
-Always verify block device names with `lsblk -o NAME,SIZE,MODEL,TRAN` prior to issuing destructive commands such as `mkfs`, `fdisk`, or `dd`. Device names (`/dev/sda`, `/dev/sdb`) can change across reboots depending on kernel drive enumeration order.
+> [!WARNING]
+> Always verify block device identities with `lsblk -o NAME,SIZE,MODEL,TRAN` prior to issuing destructive commands (`mkfs`, `fdisk`, `dd`). Device path letters (`/dev/sda`, `/dev/sdb`) can shift non-deterministically across reboots or after bus re-scans.
 
 ### 8.3 Portability Constraints
 
