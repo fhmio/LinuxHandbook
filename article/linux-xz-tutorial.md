@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: xz-utils (XZ Utils 5.6.2) | **POSIX**: None (De-facto Standard) | **Safety Tier**: unprivileged-filesystem-write | **Scope**: stream-compression
+
 `xz` is a high-ratio data compression and decompression utility based on the LZMA and LZMA2 algorithms. It provides substantially higher compression ratios than `gzip` or `bzip2`, supports multi-threaded block compression, includes built-in cryptographic integrity checks (CRC32, CRC64, SHA-256), and allows random-access multi-block decompression.
 
 - **Upstream Project & Provenance**: Maintained within **XZ Utils** (`xz-utils`), built upon `liblzma` by Lasse Collin and the Tukaani Project.
@@ -79,25 +81,47 @@ xz [options] [file...]
 
 ## 4. Basic Usage
 
-### 4.1 Compressing Files with Multi-Threading and Source Retention
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Multithreaded compress | `xz -kv -T0 [file]` | `xz -kv -T0 database.tar` | Uses all CPU cores, keeps original file |
+| Decompress keep archive | `xz -dk [file.xz]` | `xz -dk database.tar.xz` | Restores original file, preserves `.xz` |
+| Extreme release compression | `xz -9e -T0 -k [file]` | `xz -9e -T0 -k release.tar` | Maximum compression ratio for distributions |
+| Test archive integrity | `xz -t [file.xz]` | `xz -tv database.tar.xz` | Verifies stream blocks and checksums |
+| Inspect archive metrics | `xz -l [file.xz]` | `xz -l database.tar.xz` | Lists blocks, ratios, and check types |
+| Memory-constrained unpack | `xz -d -M [limit] [file.xz]` | `xz -d -M 256MiB dataset.tar.xz` | Aborts if RAM exceeds limit |
+| Stream with tar | `tar -cf - [dir] \| xz -T0 > [out.tar.xz]` | `tar -cf - /var/log/ \| xz -T0 > logs.tar.xz` | Direct pipeline archiving without disk staging |
+
+### 4.2 Compressing Files with Multi-Threading and Source Retention
 
 Compress a large database or archive using all CPU cores while preserving the original file:
 
+```bash
+xz -kv -T0 database.tar
+```
+
+Output:
+
 ```console
-$ xz -kv -T0 database.tar
 database.tar (1/1)
   100 %        52.1 MiB / 380.0 MiB = 0.137   18 MiB/s       0:21             
 ```
 
 Verify the compressed output:
 
+```bash
+ls -lh database.tar*
+```
+
+Output:
+
 ```console
-$ ls -lh database.tar*
 -rw-r--r-- 1 user user 380M Sep 12 18:00 database.tar
 -rw-r--r-- 1 user user  53M Sep 12 18:00 database.tar.xz
 ```
 
-### 4.2 Decompressing an Archive
+### 4.3 Decompressing an Archive
 
 Decompress an `.xz` file while keeping the compressed archive:
 
@@ -107,12 +131,17 @@ xz -d -k database.tar.xz
 unxz -k database.tar.xz
 ```
 
-### 4.3 Inspecting Archive Structure with `-l`
+### 4.4 Inspecting Archive Structure with `-l`
 
 Query stream counts, blocks, compressed and uncompressed sizes, compression ratios, and integrity check types:
 
+```bash
+xz -l database.tar.xz
+```
+
+Output:
+
 ```console
-$ xz -l database.tar.xz
 Strms  Blocks   Compressed Uncompressed  Ratio  Check   Filename
     1       8     52.1 MiB    380.0 MiB  0.137  CRC64   database.tar.xz
 ```
@@ -133,8 +162,13 @@ xz -9e -T0 -k linux-app-v2.0.tar
 
 Audit archive integrity to verify that no byte corruption or transmission truncation occurred:
 
+```bash
+xz -tv database.tar.xz
+```
+
+Output:
+
 ```console
-$ xz -tv database.tar.xz
 database.tar.xz (1/1)
   100 %        52.1 MiB / 380.0 MiB = 0.137   94 MiB/s       0:04   OK
 ```
@@ -165,8 +199,13 @@ xz -k -T0 --check=sha256 critical_backup.tar
 
 Verify check type via `-l`:
 
+```bash
+xz -l critical_backup.tar.xz | awk '{print $6}'
+```
+
+Output:
+
 ```console
-$ xz -l critical_backup.tar.xz | awk '{print $6}'
 Check
 SHA-256
 ```
@@ -201,8 +240,13 @@ xz -T0 --block-size=64MiB huge_archive.tar
 
 Inspect internal LZMA2 filter parameters, dictionary sizes, and stream block offsets:
 
+```bash
+xz -lvv database.tar.xz
+```
+
+Output:
+
 ```console
-$ xz -lvv database.tar.xz
 database.tar.xz
   Stream 1
     Block 1
@@ -240,9 +284,13 @@ database.tar.xz
 
 ### 8.1 In-Place Deletion Hazards
 
-Like `gzip`, `xz` deletes the source file upon successful compression. In production workflows, always pass `-k` (`--keep`) to preserve input files until external verification is complete.
+> [!WARNING]
+> **In-Place Source Deletion**: Like `gzip`, `xz` unlinks the uncompressed source file upon successful compression. In production workflows, always pass `-k` (`--keep`) to preserve input files until downstream backup verification completes.
 
 ### 8.2 Decompression Memory Asymmetry
+
+> [!CAUTION]
+> **Memory Allocation Spikes**: LZMA2 compression with level `-9` requires ~674 MiB of RAM for compression. On memory-constrained servers or small containers, use `-M` (e.g. `-M 256MiB`) to prevent kernel Out-Of-Memory (OOM) process termination.
 
 LZMA2 compression is asymmetric:
 - Decompressing an archive compressed with level `-6` requires only ~9 MiB of RAM.
@@ -259,9 +307,15 @@ LZMA2 compression is asymmetric:
 
 ### 9.1 Always Enable Multi-Threading via `-T0`
 
+> [!TIP]
+> **Always Enable Multi-Threading via `-T0`**: By default, `xz` runs single-threaded (`-T1`). Supplying `-T0` or setting `export XZ_OPT="-T0"` automatically spawns worker threads matching all detected CPU cores, dramatically accelerating compression.
+
 *Upstream Rationale*: `xz(1)` documentation notes that `xz` defaults to single-threaded execution (`-T1`) for strict backward reproducibility. Compressing multi-gigabyte archives on modern multi-core systems without `-T0` leaves hardware underutilized. Always specify `-T0` or configure `export XZ_OPT="-T0"`.
 
 ### 9.2 Prefer Level `-6` Over Level `-9` for Standard Backups
+
+> [!NOTE]
+> Prefer default preset `-6` over `-9` for routine backups. Level `-9` triples CPU time for only 1–3% additional size savings; reserve `-9` and `-9e` for static release distributions.
 
 *Upstream Rationale*: Moving from preset `-6` to `-9` increases compression time by 200–300% and increases required memory from 94 MiB to 674 MiB, while typically yielding only a 1–3% additional size reduction. Reserve `-9` and `-9e` exclusively for static release archives.
 
