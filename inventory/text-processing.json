@@ -1,0 +1,68 @@
+[
+  {
+    "command": "grep",
+    "article_filename": "article/linux-grep-tutorial.md",
+    "upstream_suite": "gnu-grep",
+    "upstream_package": "grep",
+    "upstream_homepage": "https://www.gnu.org/software/grep/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/grep/manual/grep.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/grep.git/tree/doc/grep.texi"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Grep 3.11",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  },
+  {
+    "command": "sed",
+    "article_filename": "article/linux-sed-tutorial.md",
+    "upstream_suite": "gnu-sed",
+    "upstream_package": "sed",
+    "upstream_homepage": "https://www.gnu.org/software/sed/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/sed/manual/sed.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/sed.git/tree/doc/sed.texi"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU Sed 4.9",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "unprivileged-filesystem-write"
+  },
+  {
+    "command": "awk",
+    "article_filename": "article/linux-awk-tutorial.md",
+    "upstream_suite": "gnu-gawk",
+    "upstream_package": "gawk",
+    "upstream_homepage": "https://www.gnu.org/software/gawk/",
+    "official_documentation": {
+      "doc_type": "texinfo",
+      "man_section": 1,
+      "primary_url": "https://www.gnu.org/software/gawk/manual/gawk.html",
+      "source_repo_url": "https://git.savannah.gnu.org/cgit/gawk.git/tree/doc/gawk.texi"
+    },
+    "standard_status": {
+      "is_posix_standardized": true,
+      "compliance_level": "posix-standard-with-gnu-extensions"
+    },
+    "current_researched_version": "GNU GAWK 5.3.0",
+    "research_date": "2026-09-12",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "safe-read-only"
+  }
+]
