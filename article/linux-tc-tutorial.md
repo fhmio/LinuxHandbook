@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: iproute2 (iproute2 6.13) | **POSIX**: Linux-Specific (iproute2 extension) | **Safety Tier**: privileged-network-state-altering | **Scope**: traffic-control-qos
+
 `tc` (Traffic Control) configures the Linux kernel networking subsystem's packet scheduling, queuing disciplines (qdiscs), traffic shaping, policing, and prioritization mechanisms. It controls how packets are queued, delayed, throttled, or dropped on network interfaces.
 
 - **Upstream Project & Provenance**: Maintained within **iproute2** (`iproute2`) in direct coordination with the Linux kernel networking subsystem.
@@ -87,22 +89,43 @@ Linux kernel traffic control is organized around four fundamental building block
 
 ## 4. Basic Usage
 
-### 4.1 Viewing Active Queuing Disciplines
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| View active qdiscs | `tc qdisc show` | `tc qdisc show` | Displays root packet schedulers on all devices |
+| Detailed statistics | `tc -s qdisc show dev [dev]` | `tc -s qdisc show dev eth0` | Inspect byte counters, drops, and overlimits |
+| Enable FQ-CoDel | `tc qdisc replace dev [dev] root fq_codel` | `sudo tc qdisc replace dev eth0 root fq_codel` | Mitigates bufferbloat and latency spikes |
+| Rate-limit bandwidth | `tc qdisc add dev [dev] root tbf ...` | `sudo tc qdisc add dev eth0 root tbf rate 10mbit burst 32kbit latency 400ms` | Enforces strict outbound bandwidth throttling |
+| Simulate WAN latency | `tc qdisc add dev [dev] root netem ...` | `sudo tc qdisc add dev eth0 root netem delay 100ms 10ms loss 2%` | Injects synthetic delay, jitter, and packet loss |
+| Delete root qdisc | `tc qdisc del dev [dev] root` | `sudo tc qdisc del dev eth0 root` | Resets interface to kernel default scheduling |
+
+### 4.2 Viewing Active Queuing Disciplines
 
 Inspect the active root qdiscs configured across all network devices:
 
+```bash
+tc qdisc show
+```
+
+Output:
+
 ```console
-$ tc qdisc show
 qdisc noqueue 0: dev lo root refcnt 2 
 qdisc fq_codel 0: dev eth0 root refcnt 2 limit 10240p flows 1024 quantum 1514 target 5ms interval 100ms memory_limit 32Mb ecn drop_batch 64 
 ```
 
-### 4.2 Inspecting Transmission and Drop Statistics
+### 4.3 Inspecting Transmission and Drop Statistics
 
 Display real-time traffic statistics, packet counts, and dropped packets on an interface:
 
+```bash
+tc -s qdisc show dev eth0
+```
+
+Output:
+
 ```console
-$ tc -s qdisc show dev eth0
 qdisc fq_codel 0: root refcnt 2 limit 10240p flows 1024 quantum 1514 target 5ms interval 100ms 
  Sent 14829104 bytes 12891 pkt (dropped 0, overlimits 0 requeues 0) 
  backlog 0b 0p requeues 0
@@ -124,8 +147,13 @@ sudo tc qdisc replace dev eth0 root fq_codel
 
 Verify active parameters:
 
+```bash
+tc qdisc show dev eth0
+```
+
+Output:
+
 ```console
-$ tc qdisc show dev eth0
 qdisc fq_codel 0: dev eth0 root refcnt 2 limit 10240p flows 1024 target 5ms interval 100ms
 ```
 
@@ -134,14 +162,18 @@ qdisc fq_codel 0: dev eth0 root refcnt 2 limit 10240p flows 1024 target 5ms inte
 Apply strict rate-limiting to outbound interface traffic using the `tbf` qdisc:
 
 ```bash
-# Rate limit eth0 to 10 Mbit/s with 32 kbit burst and 400ms max latency
 sudo tc qdisc add dev eth0 root tbf rate 10mbit burst 32kbit latency 400ms
 ```
 
 Inspect the enforced limits:
 
+```bash
+tc qdisc show dev eth0
+```
+
+Output:
+
 ```console
-$ tc qdisc show dev eth0
 qdisc tbf 8001: dev eth0 root refcnt 2 rate 10Mbit burst 4Kb lat 400ms 
 ```
 
@@ -150,14 +182,18 @@ qdisc tbf 8001: dev eth0 root refcnt 2 rate 10Mbit burst 4Kb lat 400ms
 Simulate degraded WAN conditions (e.g. satellite or cross-continental links) for testing distributed systems:
 
 ```bash
-# Add 100ms base delay (+/- 10ms jitter) and 2% random packet loss
 sudo tc qdisc add dev eth0 root netem delay 100ms 10ms loss 2%
 ```
 
 Verify reachability latency under emulation:
 
+```bash
+ping -c 3 192.168.1.1
+```
+
+Output:
+
 ```console
-$ ping -c 3 192.168.1.1
 PING 192.168.1.1 (192.168.1.1) 56(84) bytes of data.
 64 bytes from 192.168.1.1: icmp_seq=1 ttl=64 time=104 ms
 64 bytes from 192.168.1.1: icmp_seq=2 ttl=64 time=92.4 ms
@@ -199,8 +235,13 @@ sudo tc filter add dev eth0 protocol ip parent 1:0 prio 1 u32 match ip dport 22 
 
 Audit the class hierarchy:
 
+```bash
+tc class show dev eth0
+```
+
+Output:
+
 ```console
-$ tc class show dev eth0
 class htb 1:1 root rate 100Mbit ceil 100Mbit burst 1600b cburst 1600b 
 class htb 1:10 parent 1:1 prio 1 rate 20Mbit ceil 100Mbit burst 1600b cburst 1600b 
 class htb 1:20 parent 1:1 prio 2 rate 80Mbit ceil 100Mbit burst 1600b cburst 1600b 
@@ -220,8 +261,13 @@ sudo tc filter add dev eth0 ingress bpf da obj filter.o sec tc_ingress
 
 Inspect the attached eBPF filter:
 
+```bash
+tc filter show dev eth0 ingress
+```
+
+Output:
+
 ```console
-$ tc filter show dev eth0 ingress
 filter protocol all pref 49152 bpf chain 0 
 filter protocol all pref 49152 bpf chain 0 handle 0x1 filter.o:[tc_ingress] direct-action not_in_hw id 48 tag a1b2c3d4e5f6
 ```
@@ -257,6 +303,9 @@ filter protocol all pref 49152 bpf chain 0 handle 0x1 filter.o:[tc_ingress] dire
 
 ### 8.1 Administrative Hazards and Remote Lockout
 
+> [!WARNING]
+> **Remote Lockout Hazard**: Applying aggressive bandwidth throttling or packet loss to the management interface of a remote server can render SSH completely unusable. Always stage complex traffic shaping scripts with an automated watchdog rollback timer (e.g. `( sleep 60 && sudo tc qdisc del dev eth0 root ) &`).
+
 `tc` commands that throttle bandwidth or apply aggressive packet loss can render an SSH session unresponsive:
 - Never apply severe `netem` loss or low `tbf` rates directly to the management interface of a remote host without a safety timer.
 - Always stage complex traffic shaping scripts using a fallback watchdog:
@@ -278,13 +327,22 @@ Configuring queuing disciplines and traffic shaping requires `CAP_NET_ADMIN` pri
 
 ### 9.1 Monitor Dropped Packets with `tc -s` to Detect Buffer Starvation
 
+> [!TIP]
+> **Monitor Drops to Avoid Starvation**: Regularly audit `dropped` and `overlimits` counters using `tc -s qdisc show dev <dev>` to verify that burst and buffer parameters accommodate normal TCP window fluctuations.
+
 *Upstream Rationale*: `tc(8)` documentation emphasizes that misconfigured rate limits or undersized burst buffers result in excessive drops and TCP window collapse. Regularly audit `dropped` and `overlimits` counters using `tc -s qdisc show dev <dev>` to verify that burst parameters accommodate normal TCP window fluctuations.
 
 ### 9.2 Prefer Modern CoDel / CAKE Over Legacy FIFO Queues
 
+> [!NOTE]
+> Modern active queue management (AQM) algorithms (`fq_codel` and `cake`) automatically isolate flows and manage delay, keeping latency low even under full link saturation.
+
 *Upstream Rationale*: Traditional `pfifo_fast` queues allow large buffer bloat under saturated connections, inflating round-trip times by hundreds of milliseconds. Modern active queue management (AQM) algorithms (`fq_codel` and `cake`) automatically isolate flows and manage delay, keeping latency low even under full link saturation.
 
 ### 9.3 Clean Up Test Configurations Explicitly
+
+> [!IMPORTANT]
+> **Clean Up Emulation Rules**: Traffic control rules persist in the kernel until explicitly removed or until reboot. Leaving test `netem` rules active on staging or production interfaces causes phantom network degradation. Always issue `tc qdisc del dev <dev> root` after tests complete.
 
 *Upstream Rationale*: Traffic control rules persist in the kernel until explicitly removed or until the system reboots. Leaving test `netem` rules active on production or staging interfaces can cause phantom network degradation. Always issue `tc qdisc del dev <dev> root` upon concluding testing.
 
