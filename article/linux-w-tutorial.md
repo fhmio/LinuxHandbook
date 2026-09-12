@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: procps-ng 4.0.4 | **POSIX**: De-facto Standard (Not POSIX standardized) | **Safety Tier**: safe-read-only | **Scope**: user-session-inspection
+
 `w` displays information about the users currently logged in to the system, paired with the commands each user is running. The header displays the current system time, uptime, count of active users, and system load averages over the last 1, 5, and 15 minutes.
 
 - **Upstream Project & Provenance**: Maintained within **procps-ng** (`procps-ng`).
@@ -63,7 +65,18 @@ w [options] [user]
 
 ## 4. Basic Usage
 
-### 4.1 Standard Full Output
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Show logged-in users | `w` | Displays user sessions, idle time, and current command |
+| Filter by specific user | `w deploy` | Restricts session report to username |
+| Numeric IP addresses | `w -i` | Shows IP addresses without reverse DNS delays |
+| Short format | `w -s` | Omits login time, JCPU, and PCPU columns |
+| Suppress summary header | `w -h` | Outputs pure session table for parsing |
+| Scriptable user list | `w -h \| awk '{print $1, $3}'` | Extracts user and source IP/host |
+
+### 4.2 Standard Full Output
 
 ```bash
 w
@@ -75,7 +88,7 @@ admin    pts/0    192.168.1.45     10:15    1.00s  0.15s  0.02s w
 deploy   pts/1    bastion.corp     09:30   42:10   1.20s  0.45s python3 worker.py
 ```
 
-### 4.2 Filtering by Specific User
+### 4.3 Filtering by Specific User
 
 ```bash
 w deploy
@@ -138,7 +151,8 @@ admin pts/0 192.168.1.45
 
 ### 8.1 Spoofed `WHAT` Display
 
-The `WHAT` field reflects the process command name in `/proc/[pid]/cmdline`. Unprivileged programs can overwrite their own `argv[0]` using `setproctitle(3)` or `prctl(PR_SET_NAME)`. Never rely solely on the `WHAT` column for security-critical forensic auditing; verify with auditd or eBPF process monitors.
+> [!WARNING]
+> The `WHAT` column displays the foreground process as reported in `/proc/[pid]/cmdline`. Unprivileged processes can rewrite their own process title via `prctl(PR_SET_NAME)` or by altering `argv[0]`. Never treat the `WHAT` column as tamper-proof forensic evidence during security investigations; verify via kernel audit logs (`auditd`).
 
 ---
 
