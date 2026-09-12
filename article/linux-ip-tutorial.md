@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: iproute2 (iproute2 6.13) | **POSIX**: Linux-Specific (iproute2 extension) | **Safety Tier**: privileged-network-state-altering | **Scope**: network-interface-management
+
 `ip` is the primary command-line utility for configuring and monitoring network devices, IP addresses, routing tables, network namespaces, policy routing rules, and ARP/NDISC neighbor caches in the Linux kernel. It interacts directly with the kernel's `rtnetlink` subsystem.
 
 - **Upstream Project & Provenance**: Maintained within **iproute2** (`iproute2`), developed alongside the Linux kernel networking subsystem.
@@ -84,12 +86,30 @@ Unlike legacy tools that parsed `/proc/net/dev` text files or issued `ioctl` sys
 
 ## 4. Basic Usage
 
-### 4.1 Inspecting Network Interfaces (`ip link`)
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Brief link status | `ip -br link show` | `ip -br link show` | Tabular display of all interface states |
+| Brief IP addresses | `ip -br addr show` | `ip -br addr show` | Fast overview of IPv4/IPv6 assignments |
+| Show routing table | `ip route show` | `ip route show` | Inspect active kernel routing table |
+| Assign IP address | `ip addr add [cidr] dev [iface]` | `sudo ip addr add 10.0.0.15/24 dev eth0` | Adds protocol address with CIDR mask |
+| Remove IP address | `ip addr del [cidr] dev [iface]` | `sudo ip addr del 10.0.0.15/24 dev eth0` | Deletes address assignment |
+| Bring interface up/down | `ip link set dev [iface] up\|down` | `sudo ip link set dev eth0 up` | Alters administrative link state |
+| Set default route | `ip route replace default via [gw] dev [iface]` | `sudo ip route replace default via 192.168.1.1 dev eth0` | Atomic gateway configuration |
+| JSON output with jq | `ip -j addr show \| jq` | `ip -j -p addr show` | Structured machine-readable output |
+
+### 4.2 Inspecting Network Interfaces (`ip link`)
 
 List all network devices and their physical link states using concise tabular formatting:
 
+```bash
+ip -br link show
+```
+
+Output:
+
 ```console
-$ ip -br link show
 lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
 eth0             UP             52:54:00:12:34:56 <BROADCAST,MULTICAST,UP,LOWER_UP> 
 wlan0            DOWN           00:15:af:3b:cd:ef <BROADCAST,MULTICAST> 
@@ -97,28 +117,43 @@ wlan0            DOWN           00:15:af:3b:cd:ef <BROADCAST,MULTICAST>
 
 View complete link-layer parameters for a specific interface:
 
+```bash
+ip link show eth0
+```
+
+Output:
+
 ```console
-$ ip link show eth0
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP mode DEFAULT group default qlen 1000
     link/ether 52:54:00:12:34:56 brd ff:ff:ff:ff:ff:ff
 ```
 
-### 4.2 Querying IP Addresses (`ip addr`)
+### 4.3 Querying IP Addresses (`ip addr`)
 
 Display IPv4 and IPv6 addresses assigned to all interfaces:
 
+```bash
+ip -br addr show
+```
+
+Output:
+
 ```console
-$ ip -br addr show
 lo               UNKNOWN        127.0.0.1/8 ::1/128 
 eth0             UP             192.168.1.50/24 2001:db8::50/64 fe80::5054:ff:fe12:3456/64 
 ```
 
-### 4.3 Inspecting Routing Tables (`ip route`)
+### 4.4 Inspecting Routing Tables (`ip route`)
 
 Display the active kernel IPv4 routing table:
 
+```bash
+ip route show
+```
+
+Output:
+
 ```console
-$ ip route show
 default via 192.168.1.1 dev eth0 proto dhcp src 192.168.1.50 metric 100 
 192.168.1.0/24 dev eth0 proto kernel scope link src 192.168.1.50 metric 100 
 ```
@@ -137,8 +172,13 @@ sudo ip addr add 10.0.0.15/24 dev eth0
 
 Verify the assignment:
 
+```bash
+ip addr show dev eth0
+```
+
+Output:
+
 ```console
-$ ip addr show dev eth0
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
     inet 192.168.1.50/24 brd 192.168.1.255 scope global dynamic eth0
     inet 10.0.0.15/24 scope global secondary eth0
@@ -211,8 +251,13 @@ sudo ip link set veth-host up
 
 Test network reachability across the namespace boundary:
 
+```bash
+sudo ip netns exec sandbox ping -c 2 10.200.1.1
+```
+
+Output:
+
 ```console
-$ sudo ip netns exec sandbox ping -c 2 10.200.1.1
 PING 10.200.1.1 (10.200.1.1) 56(84) bytes of data.
 64 bytes from 10.200.1.1: icmp_seq=1 ttl=64 time=0.045 ms
 64 bytes from 10.200.1.1: icmp_seq=2 ttl=64 time=0.038 ms
@@ -226,8 +271,13 @@ PING 10.200.1.1 (10.200.1.1) 56(84) bytes of data.
 
 Combine `-j` and `-p` to export network configuration directly into structured JSON:
 
-```console
-$ ip -j -p addr show dev eth0
+```bash
+ip -j -p addr show dev eth0
+```
+
+Output:
+
+```json
 [
   {
     "ifindex": 2,
@@ -256,15 +306,19 @@ Extract the primary IPv4 address reliably with `jq`:
 
 ```bash
 ip -j addr show dev eth0 | jq -r '.[0].addr_info[] | select(.family=="inet") | .local'
-# Output: 192.168.1.50
 ```
 
 ### 6.2 Monitoring Real-Time Kernel Network Events
 
 Use `ip monitor` to stream live Netlink events (IP address assignments, link carrier changes, routing table modifications):
 
+```bash
+ip monitor link address route
+```
+
+Output:
+
 ```console
-$ ip monitor link address route
 [LINK] 2: eth0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc fq_codel state DOWN group default
 [LINK] 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default
 [ADDR] 2: eth0    inet 192.168.1.155/24 scope global dynamic eth0
@@ -319,13 +373,17 @@ rm /tmp/network-setup.batch
 
 ### 8.1 Privileged State Mutation Hazards
 
+> [!WARNING]
+> **Remote Disconnection Risk**: Modifying routing tables or link states across remote SSH connections risks immediate termination of network connectivity. Always test potentially disruptive route or interface mutations with timed recovery fallbacks (e.g. `sudo ip ... && sleep 30 && sudo reboot`) or utilize out-of-band console access.
+
 `ip` commands that alter interfaces, addresses, or routes require `CAP_NET_ADMIN` privileges. Modifying routes or link states on remote SSH sessions risks immediate loss of connectivity:
 - Always test complex route or interface changes with timed fallback commands (`sudo ip ... ; sleep 30 ; sudo reboot`).
 - Avoid running `ip link set dev <iface> down` on remote primary uplinks.
 
 ### 8.2 Atomic Replacement vs Collision
 
-Use `ip route replace` instead of `ip route del` followed by `ip route add` to avoid transient packet loss windows during routing updates.
+> [!TIP]
+> Use `ip route replace` instead of `ip route del` followed by `ip route add` to avoid transient packet loss windows during routing updates.
 
 ### 8.3 Portability Constraints
 
@@ -337,9 +395,15 @@ Use `ip route replace` instead of `ip route del` followed by `ip route add` to a
 
 ### 9.1 Cease Using Deprecated `net-tools`
 
+> [!IMPORTANT]
+> **Cease Using Deprecated `net-tools`**: Tools like `ifconfig`, `route`, and `arp` are obsolete and do not support secondary IP addresses, modern routing scopes, or kernel Netlink features. Always standardize on `iproute2`.
+
 *Upstream Rationale*: `net-tools` (`ifconfig`, `route`, `arp`) was declared unmaintained over two decades ago. It cannot display secondary IPv4 addresses configured on the same interface, lacks complete IPv6 and VLAN support, and relies on slow `ioctl` polling. Modern Linux administration mandates `iproute2`.
 
 ### 9.2 Always Use Explicit CIDR Prefix Notation
+
+> [!NOTE]
+> Always use explicit CIDR notation (e.g. `/24`). Assigning an address without an explicit prefix defaults to `/32` (host-only scope) rather than inferring classful `/24` subnets.
 
 *Upstream Rationale*: Assigning an address without an explicit prefix (e.g. `ip addr add 192.168.1.5 dev eth0`) defaults to `/32` (host scope) rather than inferring classful `/24` subnets. Always supply the exact prefix length (e.g., `192.168.1.5/24`).
 
