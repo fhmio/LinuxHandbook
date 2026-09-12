@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: procps-ng 4.0.4 | **POSIX**: De-facto Standard (Not POSIX standardized) | **Safety Tier**: safe-read-only | **Scope**: interactive-system-monitoring
+
 `top` provides a dynamic, real-time view of running system processes. It continuously refreshes a summary of system resource utilization (CPU load, memory allocation, swap pressure) paired with an ordered list of tasks ranked by CPU or memory consumption.
 
 - **Upstream Project & Provenance**: Maintained within **procps-ng** (`procps-ng`).
@@ -77,13 +79,25 @@ top [-b] [-c] [-d delay] [-H] [-i] [-n iterations] [-p pidlist] [-u | -U user]
 
 ## 4. Basic Usage
 
-### 4.1 Launching Interactive Monitor
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command / Key | Notes |
+|:---|:---|:---|
+| Launch monitor | `top` | Interactive real-time process viewer |
+| Monitor specific PID | `top -p 1234` | Filters view to single process ID |
+| Monitor by user | `top -u www-data` | Filters tasks to specific username |
+| Thread-level view | `top -H -p 1234` | Shows threads instead of process tasks |
+| Single-shot text report | `top -b -n 1 > snapshot.txt` | Batch mode export without curses codes |
+| Sort by memory | Key `M` | In interactive mode, sorts by RAM usage |
+| Toggle per-CPU view | Key `1` | Shows utilization of each CPU core |
+
+### 4.2 Launching Interactive Monitor
 
 ```bash
 top
 ```
 
-### 4.2 Restricting to a Specific Process
+### 4.3 Restricting to a Specific Process
 
 ```bash
 top -p 4512
@@ -160,7 +174,8 @@ Interactive customizations (colors, fields, sort order) can be persisted by pres
 
 ### 8.1 Signal Sending via `k`
 
-Pressing `k` in interactive mode allows sending arbitrary signals to processes. The default signal is `15` (`SIGTERM`). Only send `9` (`SIGKILL`) if a process refuses graceful termination.
+> [!WARNING]
+> Sending termination signals via the interactive `k` key defaults to `SIGTERM` (15). Avoid prematurely resorting to `SIGKILL` (9), which prevents applications from flushing database buffers or removing lockfiles.
 
 ---
 
