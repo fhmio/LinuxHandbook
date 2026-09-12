@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: procps-ng 4.0.4 | **POSIX**: Linux-Specific (procps-ng extension) | **Safety Tier**: safe-read-only | **Scope**: memory-inspection
+
 `free` displays the total amount of free and used physical memory (RAM) and swap memory in the system, as well as the memory used by kernel buffers and page caches. It parses `/proc/meminfo` to report accurate, kernel-derived memory statistics.
 
 - **Upstream Project & Provenance**: Maintained within **procps-ng** (`procps-ng`).
@@ -71,7 +73,18 @@ free [options]
 
 ## 4. Basic Usage
 
-### 4.1 Human-Readable Memory Summary
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Human-readable summary | `free -h` | Displays RAM/swap in GiB/MiB |
+| Megabytes format | `free -m` | Deterministic numeric output for scripting |
+| Wide breakdown | `free -h -w` | Separates `buffers` from `cache` |
+| Include total row | `free -h -t` | Appends total line combining RAM + Swap |
+| Continuous monitoring | `free -h -s 2 -c 5` | Updates every 2 seconds, 5 times |
+| Check available memory | `free -m \| awk '/^Mem:/ {print $7}'` | Extracts usable memory without swapping |
+
+### 4.2 Human-Readable Memory Summary
 
 ```bash
 free -h
@@ -82,7 +95,7 @@ Mem:            15Gi       5.8Gi       4.2Gi       412Mi       5.5Gi       9.1Gi
 Swap:          2.0Gi          0B       2.0Gi
 ```
 
-### 4.2 Detailed Wide Output
+### 4.3 Detailed Wide Output
 
 ```bash
 free -h -w
@@ -99,7 +112,9 @@ Swap:          2.0Gi          0B       2.0Gi
 
 ### 5.1 Understanding Why "Free" Memory is Low
 
-A common system administration misunderstanding is assuming a system is running out of memory because `free` is low:
+> [!IMPORTANT]
+> **The Available vs Free Distinction**: Linux aggressively utilizes unallocated memory for disk caching (`buff/cache`) to maximize system performance. A low `free` figure is normal and expected. Always evaluate the **`available`** column, which reflects memory that can be immediately provided to applications without forcing swap activity.
+
 - **Linux Kernel Architecture**: The Linux kernel intentionally borrows unused RAM for disk caching (`buff/cache`) to accelerate disk reads.
 - **The Golden Rule**: Look at the **`available`** column, **not** the `free` column.
 - If applications require more RAM, the kernel instantaneously reclaims page cache without swapping. The `available` column accurately reflects memory ready to be allocated.
@@ -149,7 +164,8 @@ Wide mode (`-w`) exposes `buffers` vs `cache`. In modern Linux kernels, `cache` 
 
 ### 8.1 Linux-Specific Kernel Metrics
 
-`free` relies strictly on `/proc/meminfo`. It does not function on macOS or BSD systems, where equivalent memory inspection is performed via `vm_stat` or `sysctl vm`.
+> [!NOTE]
+> `free` directly parses `/proc/meminfo` and is specific to the Linux kernel. It is not available on BSD or macOS systems (which use `vm_stat` or `sysctl vm`).
 
 ---
 
