@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `GNU Coreutils 9.11` | **POSIX**: `POSIX.1-2024 (with GNU extensions)` | **Safety Tier**: `safe-read-only` | **Scope**: `Stream suffix extraction, real-time log tracking (-f/-F) & inotify monitoring`
+
 `tail` outputs the end portion (the last *N* lines or bytes) of specified files or standard input. Beyond static slicing, `tail` provides real-time streaming capability via the follow flags (`-f` and `-F`), monitoring growing files and log streams as new lines are appended.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -65,13 +67,25 @@ tail [OPTION]... [FILE]...
 
 ## 4. Basic Usage
 
-### 4.1 Last 10 Lines (Default)
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Last 10 lines (default) | `tail /var/log/syslog` | Outputs end 10 lines of file |
+| Last N lines explicitly | `tail -n 50 /var/log/nginx/error.log` | `-n 50` outputs final 50 lines |
+| Follow log in real time | `tail -f /var/log/syslog` | Keeps stream open for appended lines |
+| Follow log across rotations | `tail -F /var/log/app.log` | `-F` tracks filename across daily logrotate |
+| Output from line K to end | `tail -n +2 data.csv` | `+2` strips header row 1 and prints rest |
+| Auto-exit when process dies | `tail --pid=$PID -f app.log` | `--pid` terminates stream when PID halts |
+| Monitor multiple log files | `tail -F /var/log/{auth,syslog}.log` | Displays contextual headers between files |
+
+### 4.2 Last 10 Lines (Default)
 
 ```bash
 tail /var/log/nginx/access.log
 ```
 
-### 4.2 Last 25 Lines Explicitly
+### 4.3 Last 25 Lines Explicitly
 
 ```bash
 tail -n 25 /var/log/syslog
@@ -88,6 +102,7 @@ Tracking an active application log across logrotate truncation and renaming even
 ```bash
 tail -F /var/log/nginx/error.log
 ```
+
 - **Technical Analysis**:
   - Standard `-f` tracks the underlying file descriptor (`inode`). When `logrotate` renames `error.log` to `error.log.1` and opens a new file, `-f` stays locked to the old rotated file.
   - `-F` tracks by **filename** and re-opens the file descriptor when a new file with that name appears, seamlessly continuing stream monitoring across daily rotations.
@@ -99,6 +114,7 @@ Stripping a 1-line CSV header and processing the remaining data:
 ```bash
 tail -n +2 data.csv | awk -F, '{print $1, $3}'
 ```
+
 - **Technical Analysis**: `+2` specifies starting from line 2 onward to the end of the file, cleanly removing the first row.
 
 ### 5.3 Auto-Terminating Tail with Process Tracking (`--pid`)
@@ -110,6 +126,7 @@ Monitoring a long-running backup process and terminating log streaming the exact
 BACKUP_PID=$!
 tail --pid=$BACKUP_PID -f backup.log
 ```
+
 - When process `$BACKUP_PID` exits, `tail` automatically terminates and yields the shell prompt.
 
 ---
@@ -121,6 +138,9 @@ tail --pid=$BACKUP_PID -f backup.log
 ```bash
 tail -f /var/log/auth.log /var/log/syslog
 ```
+
+*Sample terminal output:*
+
 ```text
 ==> /var/log/auth.log <==
 Sep 12 11:15:01 web sshd[4912]: Accepted publickey for admin...
@@ -128,6 +148,7 @@ Sep 12 11:15:01 web sshd[4912]: Accepted publickey for admin...
 ==> /var/log/syslog <==
 Sep 12 11:15:10 web systemd[1]: Started Session 45 of User admin.
 ```
+
 - Switches context and outputs file headers automatically as new writes occur across monitored streams.
 
 ---
@@ -147,22 +168,34 @@ Sep 12 11:15:10 web systemd[1]: Started Session 45 of User admin.
 
 ### 8.1 Differences Between `-f` and `-F`
 
-- `-f`: Follows the opened inode (file descriptor). If the file is unlinked or rotated, `tail` continues reading the dead inode until terminated.
-- `-F`: Follows by file name. Re-checks directory entries and re-establishes tracking if the file is recreated or replaced.
+> [!WARNING]
+> **Descriptor Locking vs Log Rotation Hazard**: Standard `tail -f` tracks the underlying file descriptor (`inode`). When `logrotate` compresses or moves the file (e.g. `app.log` -> `app.log.1`), standard `-f` remains attached to the dead inode and stops showing new log entries.
+>
+> Always use `tail -F` (capital F) for production service monitoring. `-F` tracks the path name and automatically re-opens the new file when logrotate recreates it.
+
+### 8.2 Inotify vs Polling Overhead
+
+> [!NOTE]
+> On modern Linux, GNU `tail` automatically registers inotify kernel watches. If running inside Docker containers mounting files from host network filesystems (NFS/CIFS) where inotify does not trigger, add `---disable-inotify` or `-s 1` to force periodic polling.
 
 ---
 
 ## 9. Best Practices
 
 1. **Always Use `tail -F` (Capital F) for Production Log Streaming**:
-   - *Guidance*: Default all log monitoring to `tail -F`.
-   - *Authoritative Justification*: GNU documentation explains that `-F` handles log file renaming, deletion, and recreation automatically.
+   > [!IMPORTANT]
+   > *Guidance*: Default all log monitoring to `tail -F`.
+   > *Authoritative Justification*: GNU documentation explains that `-F` handles log file renaming, deletion, and recreation automatically.
+
 2. **Use `tail -n +2` for Header Stripping**:
-   - *Guidance*: Use `tail -n +2` instead of complex `sed` or `awk` invocations to skip header rows in pipelines.
-   - *Authoritative Justification*: Standardized by POSIX.1-2024 and optimized for streaming throughput in Coreutils.
+   > [!TIP]
+   > *Guidance*: Use `tail -n +2` instead of complex `sed` or `awk` invocations to skip header rows in pipelines.
+   > *Authoritative Justification*: Standardized by POSIX.1-2024 and optimized for streaming throughput in Coreutils.
+
 3. **Use `--pid` in Automated Test Harnesses**:
-   - *Guidance*: Bind `tail -f` to child PID in background integration tests.
-   - *Authoritative Justification*: Prevents orphaned `tail` background processes from leaking memory after the watched test script terminates.
+   > [!TIP]
+   > *Guidance*: Bind `tail -f` to child PID in background integration tests.
+   > *Authoritative Justification*: Prevents orphaned `tail` background processes from leaking memory after the watched test script terminates.
 
 ---
 
