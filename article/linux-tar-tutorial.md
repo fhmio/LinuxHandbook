@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: gnu-tar (GNU tar 1.35) | **POSIX**: POSIX.1-2024 pax-compatible / GNU extension | **Safety Tier**: unprivileged-filesystem-write | **Scope**: archive-manipulation
+
 `tar` (Tape Archive) is the standard UNIX and Linux archiving utility. It concatenates multiple files, directories, symbolic links, and filesystem metadata into a single sequential archive stream (`tarball`) while preserving UNIX permissions, timestamps, owner/group attributes, and extended attributes.
 
 - **Upstream Project & Provenance**: Maintained by the **GNU Project** under **GNU tar** (`tar`).
@@ -85,12 +87,29 @@ Every `tar` invocation requires exactly **one** primary operation mode specifyin
 
 ## 4. Basic Usage
 
-### 4.1 Creating a Compressed Archive
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command Pattern | Copyable One-Liner | Notes |
+|:---|:---|:---|:---|
+| Create compressed archive | `tar -czvf [archive.tar.gz] [dir]` | `tar -czvf backup.tar.gz /var/www/html/` | Packs and compresses with gzip |
+| Auto-compress by suffix | `tar -caf [archive.tar.xz] [dir]` | `tar -caf archive.tar.xz /data/` | Automatically detects compression from suffix |
+| List archive members | `tar -tvf [archive]` | `tar -tvf backup.tar.gz` | Inspect contents without extracting |
+| Extract archive | `tar -xvf [archive]` | `tar -xvf backup.tar.gz` | Unpacks to current directory |
+| Extract to directory | `tar -xvf [archive] -C [dir]` | `tar -xvf backup.tar.gz -C /opt/app/` | Unpacks into targeted location |
+| Strip root component | `tar -xvf [archive] -C [dir] --strip-components=1` | `sudo tar -xzvf nginx.tar.gz -C /opt/nginx --strip-components=1` | Removes top-level folder on unpack |
+| Stream over SSH | `tar -cf - [dir] \| ssh [host] "tar -xf - -C [dest]"` | `tar -cf - /data/ \| ssh user@remote "tar -xf - -C /backup/"` | Streams archives without local disk staging |
+
+### 4.2 Creating a Compressed Archive
 
 Create a gzip-compressed archive (`-czvf`) of a project directory:
 
+```bash
+tar -czvf webapp-backup.tar.gz /var/www/html/
+```
+
+Output:
+
 ```console
-$ tar -czvf webapp-backup.tar.gz /var/www/html/
 tar: Removing leading `/' from member names
 /var/www/html/
 /var/www/html/index.html
@@ -98,14 +117,20 @@ tar: Removing leading `/' from member names
 /var/www/html/images/
 /var/www/html/images/logo.png
 ```
+
 *Note*: GNU tar automatically strips leading slashes (`/`) by default to prevent dangerous absolute path overwrites during extraction.
 
-### 4.2 Inspecting Archive Contents Without Extracting (`-tvf`)
+### 4.3 Inspecting Archive Contents Without Extracting (`-tvf`)
 
 Inspect archive members, permissions, ownership, and timestamps prior to unpacking:
 
+```bash
+tar -tvf webapp-backup.tar.gz
+```
+
+Output:
+
 ```console
-$ tar -tvf webapp-backup.tar.gz
 drwxr-xr-x www-data/www-data 0 2026-09-12 18:00 var/www/html/
 -rw-r--r-- www-data/www-data 2415 2026-09-12 18:00 var/www/html/index.html
 -rw-r--r-- www-data/www-data 8492 2026-09-12 18:00 var/www/html/style.css
@@ -113,7 +138,7 @@ drwxr-xr-x www-data/www-data 0 2026-09-12 18:00 var/www/html/images/
 -rw-r--r-- www-data/www-data 45812 2026-09-12 18:00 var/www/html/images/logo.png
 ```
 
-### 4.3 Extracting an Archive
+### 4.4 Extracting an Archive
 
 Extract an archive into the current working directory:
 
@@ -163,8 +188,13 @@ tar -caf project.tar.gz \
 
 Detect whether local configuration files have drifted since an archive was generated:
 
+```bash
+tar -dzf system-backup.tar.gz
+```
+
+Output:
+
 ```console
-$ tar -dzf system-backup.tar.gz
 etc/hosts: Mod time differs
 etc/hosts: Size differs
 etc/ssh/sshd_config: Contents differ
@@ -228,13 +258,13 @@ tar -Scaf disk-images.tar.xz /var/lib/libvirt/images/
 
 ### 8.1 "Tarbomb" Prevention
 
-A "tarbomb" is an archive containing hundreds of files at the archive root without an enclosing parent directory. Extracting such archives clutters the current working directory.
-- Always inspect archive structures first with `tar -tf archive.tar.gz`.
-- Alternatively, extract into an isolated target folder using `tar -xf archive.tar.gz -C /tmp/sandbox/`.
+> [!WARNING]
+> **Tarbomb Hazard**: A "tarbomb" is an archive containing hundreds of loose files at the archive root without a parent directory. Extracting it clutters the current working directory. Always inspect archive contents first with `tar -tf archive.tar.gz` or extract into an isolated directory with `-C`.
 
 ### 8.2 Absolute Paths and Traversal Safeguards
 
-Historically, malicious archives contained filenames with leading slashes (`/etc/shadow`) or parent directory references (`../../root/.ssh/authorized_keys`). GNU tar automatically strips leading `/` and ignores `../` components unless explicitly overridden with `-P` (`--absolute-names`). Never pass `-P` when untarring untrusted third-party archives.
+> [!CAUTION]
+> GNU tar automatically strips leading slashes (`/`) and ignores `../` path traversals to prevent malicious archives from overwriting system files. Never specify `-P` (`--absolute-names`) when extracting untrusted third-party archives.
 
 ### 8.3 Portability Between GNU and BSD Tar
 
@@ -248,9 +278,15 @@ Historically, malicious archives contained filenames with leading slashes (`/etc
 
 ### 9.1 Always Inspect Archives with `-tvf` Prior to Extraction
 
+> [!TIP]
+> **Always Inspect Archives with `-tvf` Prior to Extraction**: Verifying permissions, file paths, and member counts prior to extraction prevents accidental file overwrites or unintended directory contamination.
+
 *Upstream Rationale*: `tar(1)` documentation emphasizes that extracting unknown archives can overwrite existing local files or create clutter. Running `tar -tvf` verifies member hierarchy, permissions, and paths before any filesystem writes occur.
 
 ### 9.2 Use `-C` to Target Output Directories Explicitly
+
+> [!IMPORTANT]
+> **Target Output Directories Explicitly**: Always specify `-C /path/to/target/` to guarantee deterministic extraction boundaries and eliminate reliance on current shell working directories.
 
 *Upstream Rationale*: Relying on the current working directory for extraction creates race conditions in automated scripts and invites accidental file clobbering. Always specify `-C /path/to/target/` to guarantee deterministic extraction boundaries.
 
