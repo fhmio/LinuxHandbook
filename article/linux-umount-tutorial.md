@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: util-linux 2.40 | **POSIX**: Linux-Specific (util-linux extension) | **Safety Tier**: privileged-system-destructive | **Scope**: filesystem-unmounting
+
 `umount` detaches specified filesystems from the hierarchical Virtual File System (VFS). It ensures pending filesystem write caches are flushed to the underlying storage device and verifies that no active processes hold open file handles before detaching the mount point.
 
 - **Upstream Project & Provenance**: Maintained within **util-linux** (`util-linux`).
@@ -68,13 +70,24 @@ umount [-dflnrv] {dir|spec}...
 
 ## 4. Basic Usage
 
-### 4.1 Unmounting by Mount Point
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Unmount by mountpoint | `sudo umount /mnt/data` | Cleanly detaches filesystem after cache flush |
+| Unmount by device | `sudo umount /dev/sdb1` | Detaches partition via block device path |
+| Lazy detachment | `sudo umount -l /mnt/share` | Detaches path immediately, cleans references when free |
+| Force unmount network share | `sudo umount -f /mnt/nfs` | Forces detachment on dead NFS exports |
+| Recursive unmount | `sudo umount -R /chroot` | Unmounts root and all nested submounts |
+| Fallback to read-only | `sudo umount -r /mnt/backup` | If busy, remounts read-only to prevent corruption |
+
+### 4.2 Unmounting by Mount Point
 
 ```bash
 sudo umount /mnt/backup
 ```
 
-### 4.2 Unmounting by Device Name
+### 4.3 Unmounting by Device Name
 
 ```bash
 sudo umount /dev/sdb1
@@ -156,8 +169,8 @@ sudo umount -R /srv/container_root
 
 ### 8.1 Data Loss Hazards with Physical Disks
 
-- Pulling a USB drive or external SSD immediately after executing `umount -l` can cause **data loss**.
-- **Reason**: While lazy unmount detaches the path from user space, the kernel may still be flushing write caches in the background. Wait until `sync` returns before physically disconnecting media.
+> [!WARNING]
+> **Removable Storage Data Loss**: Using `umount -l` (lazy) detaches the mount point from the VFS namespace immediately, but dirty write buffers may still be flushing to disk in the background. Physically removing USB drives or SSDs before write caches clear causes filesystem corruption. Always run `sync` and confirm the device is idle before disconnecting.
 
 ---
 
