@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: procps-ng 4.0.4 | **POSIX**: POSIX.1-2024 (with GNU extensions) | **Safety Tier**: safe-read-only | **Scope**: process-inspection
+
 `ps` (process status) displays information about active processes currently running on the system. It inspects the Linux `/proc` virtual pseudo-filesystem, parsing `/proc/[pid]/stat`, `status`, `cmdline`, and cgroups to report CPU, memory, thread hierarchy, and execution states.
 
 - **Upstream Project & Provenance**: Maintained within the **procps-ng** project (`procps-ng`).
@@ -79,7 +81,19 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 4. Basic Usage
 
-### 4.1 Standard BSD Process Snapshot (`aux`)
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| BSD full snapshot | `ps aux` | Detailed snapshot of all running processes |
+| POSIX standard listing | `ps -ef` | All processes with UID, PID, PPID |
+| Top CPU consumers | `ps aux --sort=-%cpu \| head -n 10` | Sorts descending by CPU percentage |
+| Top memory consumers | `ps aux --sort=-%mem \| head -n 10` | Sorts descending by RAM consumption |
+| Process tree view | `ps -ef --forest` | Shows ASCII parent-child hierarchy |
+| Custom scriptable fields | `ps -eo pid,user,%cpu,%mem,comm` | Selects precise columns |
+| Inspect threads | `ps -T -p <pid>` | Lists Lightweight Processes (LWP) for PID |
+
+### 4.2 Standard BSD Process Snapshot (`aux`)
 
 ```bash
 ps aux | head -n 5
@@ -92,7 +106,7 @@ root         3  0.0  0.0      0     0 ?        I<   Sep10   0:00 [rcu_gp]
 syslog    1120  0.0  0.0 220450  4120 ?        Ssl  Sep10   0:01 /usr/sbin/rsyslogd -n
 ```
 
-### 4.2 Standard POSIX Full Listing (`-ef`)
+### 4.3 Standard POSIX Full Listing (`-ef`)
 
 ```bash
 ps -ef | head -n 4
@@ -189,8 +203,8 @@ The `STAT` column encodes Linux kernel scheduler states:
 
 ### 8.1 Command-Line Truncation and Environment Leaks
 
-- `/proc/[pid]/cmdline` exposes arguments passed to commands. Any secret passed directly via command line (e.g. `mysql -pSECRET`) is visible to every local user running `ps aux`.
-- In shared environments, administrators should mount `/proc` with `hidepid=2` to ensure unprivileged users can only inspect their own processes.
+> [!WARNING]
+> Arguments passed to executables appear in cleartext via `/proc/[pid]/cmdline` and are visible to all users running `ps aux`. Never pass credentials, passwords, or secret tokens via command-line flags (e.g. `mysql -pSECRET`). In multi-tenant systems, configure `/proc` with `hidepid=2` to isolate process visibility.
 
 ---
 
