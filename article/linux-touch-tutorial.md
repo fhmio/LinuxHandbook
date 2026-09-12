@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `GNU Coreutils 9.11` | **POSIX**: `POSIX.1-2024 (with GNU extensions)` | **Safety Tier**: `unprivileged-filesystem-write` | **Scope**: `Zero-byte file creation & inode timestamp updates (atime/mtime)`
+
 `touch` modifies file timestamps (access time `atime` and modification time `mtime`) or creates empty files when specified targets do not exist. It invokes the `utimensat(2)` system call, enabling timestamp updates with nanosecond precision.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -68,13 +70,25 @@ touch [OPTION]... FILE...
 
 ## 4. Basic Usage
 
-### 4.1 Creating an Empty File
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Create empty file / update to now | `touch file.txt` | Creates file if missing or updates atime & mtime |
+| Update timestamp without creating | `touch -c file.txt` | `-c` prevents creating file if it does not exist |
+| Update modification time only | `touch -m file.txt` | `-m` updates mtime only, leaving atime intact |
+| Update access time only | `touch -a file.txt` | `-a` updates atime only |
+| Set explicit date/time string | `touch -d "2026-01-01 12:00:00" file.txt` | `-d` parses human date strings |
+| Sync timestamps from reference | `touch -r source.bin target.bin` | `-r` copies timestamps from reference file |
+| Update symlink itself | `touch -h -m symlink` | `-h` affects symlink instead of dereferencing |
+
+### 4.2 Creating an Empty File
 
 ```bash
 touch newfile.txt
 ```
 
-### 4.2 Updating Timestamp to Current Time Without Modification
+### 4.3 Updating Timestamp to Current Time Without Modification
 
 ```bash
 touch existing_file.txt
@@ -91,6 +105,7 @@ In deployment scripts that touch lockfiles or cache markers:
 ```bash
 touch -c /var/run/app.lock
 ```
+
 - If `/var/run/app.lock` exists, its timestamps update to now. If missing, `touch` silently does nothing and avoids creating an unwanted file.
 
 ### 5.2 Synchronizing Timestamps with a Reference File
@@ -100,6 +115,7 @@ Setting a file's timestamps to match an authoritative release binary:
 ```bash
 touch -r /opt/app/bin/server /opt/app/etc/server.conf
 ```
+
 - Both `atime` and `mtime` of `server.conf` now match `server`.
 
 ### 5.3 Setting an Explicit Timestamp for Testing
@@ -109,9 +125,16 @@ Simulating an old log file for logrotate testing:
 ```bash
 touch -d "2026-01-01 12:00:00" old_audit.log
 ```
-- Verifying with `stat`:
-```console
-$ stat -c "%y" old_audit.log
+
+Verifying with `stat`:
+
+```bash
+stat -c "%y" old_audit.log
+```
+
+*Sample terminal output:*
+
+```text
 2026-01-01 12:00:00.000000000 +0000
 ```
 
@@ -126,6 +149,7 @@ By default, `touch` dereferences symlinks and updates the target file. To update
 ```bash
 touch -h -m current_symlink
 ```
+
 - Modifies the symlink's own modification timestamp without touching the target.
 
 ---
@@ -145,19 +169,29 @@ touch -h -m current_symlink
 
 ### 8.1 Permission Requirements
 
-- To set timestamps to the **current time**, a user needs write permission on the file.
-- To set timestamps to an **arbitrary time** (via `-d` or `-t`), the user must be the **owner** of the file or root (`CAP_FOWNER`).
+> [!IMPORTANT]
+> **Privilege Boundary for Arbitrary Timestamps**: Setting file timestamps to the **current time** requires write permission on the target file.
+>
+> However, setting timestamps to an **arbitrary past or future time** (via `-d` or `-t`) requires that the calling process either **owns the file** or holds root privileges (`CAP_FOWNER`).
+
+### 8.2 Inode Metadata ctime Invariance
+
+> [!NOTE]
+> `ctime` (status change time) cannot be directly set by users or utilities. The Linux kernel automatically updates `ctime` to the current system clock whenever `atime` or `mtime` is modified.
 
 ---
 
 ## 9. Best Practices
 
 1. **Use `-c` in Automation to Prevent Spurious File Creation**:
-   - *Guidance*: Add `-c` when updating timestamps on state files.
-   - *Authoritative Justification*: GNU and POSIX documentation confirm `-c` guarantees no empty file is created if the target path is absent.
+   > [!TIP]
+   > *Guidance*: Add `-c` when updating timestamps on state files or triggering watchdog touch operations.
+   > *Authoritative Justification*: GNU and POSIX documentation confirm `-c` guarantees no empty file is created if the target path is absent.
+
 2. **Use `-r` for Reproducible Artifact Builds**:
-   - *Guidance*: Set build output timestamps to match the source commit using `touch -r`.
-   - *Authoritative Justification*: Ensures deterministic build outputs across CI/CD pipelines.
+   > [!TIP]
+   > *Guidance*: Set build output timestamps to match the source commit using `touch -r`.
+   > *Authoritative Justification*: Ensures deterministic build outputs across CI/CD pipelines.
 
 ---
 
