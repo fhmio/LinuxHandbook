@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `GNU Coreutils 9.11` | **POSIX**: `POSIX.1-2024 (with GNU extensions)` | **Safety Tier**: `destructive-filesystem-modification` | **Scope**: `File unlinking, recursive directory purging & filesystem inode deallocation`
+
 `rm` unlinks files and deletes directory entries from the filesystem. It invokes the `unlinkat(2)` system call, decrementing the inode's hard link count. When an inode's link count reaches zero and no processes maintain open file descriptors to it, the filesystem deallocates the associated storage blocks.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -67,17 +69,31 @@ rm [OPTION]... [FILE]...
 
 ## 4. Basic Usage
 
-### 4.1 Removing a Single File
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Remove single file | `rm debug.log` | Unlinks file from parent directory |
+| Force remove multiple files | `rm -f /tmp/cache_*.tmp` | `-f` suppresses missing file warnings and prompts |
+| Prompt before every file | `rm -i *.bak` | `-i` asks confirmation for each individual file |
+| Prompt once before bulk delete | `rm -I -r /var/log/old/` | `-I` prompts once if >3 files or recursive |
+| Recursive directory removal | `rm -r ./build_output/` | `-r` traverses and deletes directory tree |
+| Confine deletion to single mount | `rm -rf --one-file-system /var/tmp/cache/` | Prevents crossing mount boundaries into shares/drives |
+| Remove empty directory | `rm -d ./empty_dir/` | `-d` removes directory without recursion |
+| Safe deletion with leading hyphen | `rm -- -filename` | `--` terminates flag parsing |
+
+### 4.2 Removing a Single File
 
 ```bash
 rm temp_debug.log
 ```
 
-### 4.2 Removing Multiple Files Forcibly
+### 4.3 Removing Multiple Files Forcibly
 
 ```bash
 rm -f /tmp/session_*.cache
 ```
+
 - Silently ignores any missing files and exits cleanly (`0`).
 
 ---
@@ -91,6 +107,7 @@ When cleaning up directories containing mounted network shares, external drives,
 ```bash
 rm -rf --one-file-system /var/tmp/build_cache/
 ```
+
 - **Technical Analysis**: `--one-file-system` prevents `rm` from recursing into any directory that resides on a different filesystem device than the root of the removal operation.
 
 ### 5.2 Interactive Safety Prompt for Bulk Deletions
@@ -100,9 +117,13 @@ Using `-I` for high-volume file cleanup:
 ```bash
 rm -I -r /var/log/old_logs/
 ```
+
+*Sample terminal output:*
+
 ```console
 rm: remove 48 arguments recursively? y
 ```
+
 - Prompts once for the entire batch rather than prompting 48 times for each individual file.
 
 ---
@@ -113,11 +134,15 @@ rm: remove 48 arguments recursively? y
 
 Files named `-rf` or `--help` can trick `rm` into parsing them as options. Two safe idioms exist:
 
-```bash
-# Method 1: Use double-dash argument terminator:
-rm -- -rf
+Using the double-dash argument terminator:
 
-# Method 2: Specify explicit relative path:
+```bash
+rm -- -rf
+```
+
+Or specifying an explicit relative path prefix:
+
+```bash
 rm ./-rf
 ```
 
@@ -128,6 +153,9 @@ GNU Coreutils protects the root directory `/` by default:
 ```bash
 rm -rf /
 ```
+
+*Sample terminal output:*
+
 ```text
 rm: it is dangerous to operate recursively on '/'
 rm: use --no-preserve-root to override this failsafe
@@ -150,22 +178,30 @@ rm: use --no-preserve-root to override this failsafe
 
 ### 8.1 Non-Recoverability and Directory Permissions
 
-- **Parent Directory Write Permission**: Removing a file requires write and execute (`w+x`) permissions on the **parent directory**, not the file itself. A user can delete a file they do not own if they have write permission on the directory containing it.
-- **Sticky Bit Protection (`chmod +t`)**: In directories with the sticky bit set (such as `/tmp`), unprivileged users can only delete files that they personally own, regardless of directory write permissions.
+> [!WARNING]
+> **Parent Directory Write Permission Hazard**: In UNIX filesystems, removing a file requires write and execute (`w+x`) permissions on the **parent directory**, NOT the file itself. An unprivileged user can permanently delete a file owned by root if that user owns or has write access to the containing directory.
+
+> [!NOTE]
+> **Sticky Bit Protection (`chmod +t`)**: In shared directories with the sticky bit set (such as `/tmp`), unprivileged users can only delete files that they personally own, regardless of general directory write permissions.
 
 ---
 
 ## 9. Best Practices
 
 1. **Always Use `--one-file-system` for Recursive Administrative Cleanups**:
-   - *Guidance*: Add `--one-file-system` when running `rm -rf` on system directories like `/var` or `/mnt`.
-   - *Authoritative Justification*: GNU documentation notes that this flag guarantees deletion will not cross into mounted partitions, network shares, or pseudo-filesystems (`/sys`, `/proc`).
+   > [!IMPORTANT]
+   > *Guidance*: Add `--one-file-system` when running `rm -rf` on system directories like `/var` or `/mnt`.
+   > *Authoritative Justification*: GNU documentation notes that this flag guarantees deletion will not cross into mounted partitions, network shares, or pseudo-filesystems (`/sys`, `/proc`).
+
 2. **Never Run `rm -rf *` in Scripts Without Target Verification**:
-   - *Guidance*: Check variable non-emptiness before executing: `[ -n "$TARGET_DIR" ] && rm -rf "${TARGET_DIR:?}"/*`.
-   - *Authoritative Justification*: Unquoted or empty variables cause `rm -rf "$DIR/*"` to expand to `rm -rf /*`.
+   > [!WARNING]
+   > *Guidance*: Check variable non-emptiness before executing: `[ -n "$TARGET_DIR" ] && rm -rf "${TARGET_DIR:?}"/*`.
+   > *Authoritative Justification*: Unquoted or empty variables cause `rm -rf "$DIR/*"` to expand to `rm -rf /*`.
+
 3. **Use `--` When Unlinking Dynamic Filenames**:
-   - *Guidance*: Always pass `rm -- "$filename"` when processing untrusted inputs.
-   - *Authoritative Justification*: Prevents filenames beginning with `-` from being interpreted as command flags.
+   > [!TIP]
+   > *Guidance*: Always pass `rm -- "$filename"` when processing untrusted inputs.
+   > *Authoritative Justification*: Prevents filenames beginning with `-` from being interpreted as command flags.
 
 ---
 
