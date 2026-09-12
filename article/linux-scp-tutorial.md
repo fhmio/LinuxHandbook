@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `OpenSSH 10.5` | **POSIX**: `None (OpenSSH standard)` | **Safety Tier**: `unprivileged-filesystem-write` | **Scope**: `Non-interactive secure remote file copy`
+
 `scp` (Secure Copy protocol) is a file copying utility that transfers files across an encrypted network link using the **OpenSSH** client infrastructure. Historically, `scp` implemented the legacy BSD `rcp` protocol over an SSH channel; in modern releases, `scp` uses the **SFTP protocol by default** for improved security and predictability.
 
 - **Upstream Project & Provenance**: Maintained within OpenSSH (`openssh-clients`).
@@ -44,10 +46,13 @@ scp [-346ABCOpqRrsTv] [-c cipher] [-D sftp_server_path] [-F ssh_config]
 ### 2.2 Source and Target Operands
 
 Files may be specified as a local path or a remote destination:
+
 ```bash
 [[user@]host:]path
 ```
+
 or via URI:
+
 ```bash
 scp://[user@]host[:port][/path]
 ```
@@ -89,20 +94,39 @@ scp://[user@]host[:port][/path]
 
 ## 4. Basic Usage
 
-### 4.1 Copying a Local File to a Remote Host
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Upload file to remote host | `scp ./app.tar.gz user@192.168.1.100:/var/www/` | Standard upload |
+| Download file from remote host | `scp user@192.168.1.100:/var/log/syslog.gz ./` | Standard download |
+| Copy directory recursively | `scp -r ./dist user@192.168.1.100:/opt/app/` | `-r` recursive directory copy |
+| Preserve file timestamps/modes | `scp -p ./release.tar.gz user@192.168.1.100:/tmp/` | `-p` preserves mtime, atime, permissions |
+| Copy via non-standard port | `scp -P 2222 ./config.json user@192.168.1.100:/tmp/` | `-P` (uppercase) sets remote port |
+| Route copy via jump bastion | `scp -J user@bastion:2222 ./file user@10.0.0.5:/tmp/` | `-J` passes through proxy jump host |
+| Remote-to-remote 3rd-party copy | `scp -3 user@host1:/data/db.sql user@host2:/data/` | `-3` routes data through local client |
+| Bandwidth rate limiting | `scp -l 10000 ./iso_image.iso user@remote:/storage/` | `-l` caps throughput to 10,000 Kbit/s |
+
+### 4.2 Copying a Local File to a Remote Host
 
 ```bash
 scp ./deploy.tar.gz admin@192.168.1.100:/var/www/
 ```
+
+*Sample terminal output:*
+
 ```text
 deploy.tar.gz                         100%   24MB  12.5MB/s   00:01
 ```
 
-### 4.2 Downloading a Remote File to Local Working Directory
+### 4.3 Downloading a Remote File to Local Working Directory
 
 ```bash
 scp admin@192.168.1.100:/var/log/syslog.1.gz ./
 ```
+
+*Sample terminal output:*
+
 ```text
 syslog.1.gz                           100%  512KB   8.2MB/s   00:00
 ```
@@ -118,6 +142,7 @@ Copying an application release directory while retaining timestamps and permissi
 ```bash
 scp -p -r ./build_v2 admin@192.168.1.100:/opt/apps/
 ```
+
 - **Technical Analysis**: `-r` traverses the local tree; `-p` ensures mtime/atime and permission bits match the source on the remote destination.
 
 ### 5.2 Transferring Files Across a Bastion Host
@@ -135,6 +160,7 @@ Transferring a tarball from `serverA` to `serverB` via your workstation:
 ```bash
 scp -3 -C user@serverA.internal:/backups/db.sql user@serverB.internal:/backups/
 ```
+
 - **Technical Analysis**: `-3` streams data through the local machine's memory, avoiding the need for `serverA` to have network routing or SSH credentials to `serverB`.
 
 ### 5.4 Bandwidth-Limited File Push
@@ -154,10 +180,12 @@ scp -l 10000 ./iso_image.iso admin@remote-office:/storage/
 A critical syntax trap: `ssh` uses lowercase `-p`, whereas `scp` uses uppercase `-P` for port designation:
 
 ```bash
-# Correct for scp:
 scp -P 2222 app.tar.gz admin@target.host:/tmp/
+```
 
-# Alternatively, URI syntax allows natural port notation:
+Alternatively, standard URI syntax allows natural port notation:
+
+```bash
 scp app.tar.gz scp://admin@target.host:2222//tmp/
 ```
 
@@ -191,33 +219,42 @@ scp -o "StrictHostKeyChecking=accept-new" -o "ConnectTimeout=10" package.deb adm
 
 ### 8.1 Legacy SCP Protocol Vulnerabilities (CVE-2019-6111)
 
-- In the legacy `rcp` protocol (`-O`), the client sends a command to the remote server, and the remote server decides which filenames to stream back. Malicious or compromised servers could send arbitrary filenames outside the requested path (e.g., overwriting `~/.ssh/authorized_keys`).
-- **OpenSSH Default**: Modern `scp` utilizes the SFTP protocol engine where file names and targets are explicitly controlled by the client, neutralizing this class of attack.
-- Avoid passing `-O` unless explicitly necessary for interoperability with ancient embedded devices.
+> [!WARNING]
+> **Legacy Protocol Vulnerability (CVE-2019-6111)**: In legacy `rcp` protocol mode (`-O`), the client sends a command to the remote server, and the remote server decides which filenames to stream back. Compromised or malicious servers can send arbitrary filenames outside the requested path (such as overwriting `~/.ssh/authorized_keys`). Modern `scp` utilizes the SFTP protocol engine by default, where filenames and paths are strictly validated by the client. Avoid passing `-O` unless explicitly required for legacy embedded hardware.
 
 ### 8.2 Overwrite Traps
 
-`scp` will overwrite existing destination files without prompting unless write permissions are restricted on the target filesystem.
+> [!CAUTION]
+> **Unprompted Destination Overwrite**: `scp` overwrites existing files at the destination target without interactive confirmation. Verify target paths carefully before execution.
 
 ---
 
 ## 9. Best Practices
 
 1. **Retain the Default SFTP Protocol Mode**:
-   - *Guidance*: Never add `-O` to scripts unless connecting to legacy appliances that lack SFTP server subsystems.
-   - *Authoritative Justification*: OpenSSH release documentation confirms that the default SFTP mode protects clients against malicious remote file name injection.
+   > [!IMPORTANT]
+   > *Guidance*: Never add `-O` to scripts unless connecting to legacy appliances that lack SFTP server subsystems.
+   > *Authoritative Justification*: OpenSSH release documentation confirms that the default SFTP mode protects clients against malicious remote file name injection.
+
 2. **Use `-p` When Archiving or Deploying Builds**:
-   - *Guidance*: Pass `-p` for configuration and build artifact distribution.
-   - *Authoritative Justification*: Preserves original file modification timestamps, preventing cache invalidation issues on the target host.
+   > [!TIP]
+   > *Guidance*: Pass `-p` for configuration and build artifact distribution.
+   > *Authoritative Justification*: Preserves original file modification timestamps, preventing cache invalidation issues on the target host.
+
 3. **Use `-3` for Remote-to-Remote Copies**:
-   - *Guidance*: Always specify `-3` when copying between two remote hosts.
-   - *Authoritative Justification*: Prevents insecure direct authentication requirements between two remote servers.
+   > [!TIP]
+   > *Guidance*: Always specify `-3` when copying between two remote hosts.
+   > *Authoritative Justification*: Prevents insecure direct authentication requirements between two remote servers.
+
 4. **Throttle Batch Transfers on Shared Uplinks**:
-   - *Guidance*: Use `-l <kbit/s>` in automated crontab scripts.
-   - *Authoritative Justification*: Prevents TCP link saturation on corporate VPNs or shared gateway interfaces.
+   > [!TIP]
+   > *Guidance*: Use `-l <kbit/s>` in automated crontab scripts.
+   > *Authoritative Justification*: Prevents TCP link saturation on corporate VPNs or shared gateway interfaces.
+
 5. **Prefer `rsync` for Large or Resumable Transfers**:
-   - *Guidance*: For large directory synchronization, use `rsync -avP` instead of `scp -r`.
-   - *Authoritative Justification*: `scp` lacks delta-transfer algorithms and cannot resume partial files without re-transmitting the entire payload.
+   > [!NOTE]
+   > *Guidance*: For large directory synchronization, use `rsync -avP` instead of `scp -r`.
+   > *Authoritative Justification*: `scp` lacks delta-transfer algorithms and cannot resume partial files without re-transmitting the entire payload.
 
 ---
 
