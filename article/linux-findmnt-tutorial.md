@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: util-linux 2.40 | **POSIX**: Linux-Specific (util-linux extension) | **Safety Tier**: safe-read-only | **Scope**: mount-hierarchy-inspection
+
 `findmnt` searches and lists mounted filesystems or queries configuration files such as `/etc/fstab`, `/etc/mtab`, or `/proc/self/mountinfo`. It provides structured, hierarchical tree views, flat tables, and machine-readable output formats for inspecting Virtual File System (VFS) mounts.
 
 - **Upstream Project & Provenance**: Developed and maintained under **util-linux** as part of the `misc-utils` subsystem, powered by `libmount`.
@@ -87,12 +89,26 @@ When a single argument is supplied without flags, `findmnt` evaluates it first a
 
 ## 4. Basic Usage
 
-### 4.1 Default Hierarchical Mount Tree
+### 4.1 Quick-Reference Cheatsheet Card
+
+| Operation | Command | Notes |
+|:---|:---|:---|
+| Visual mount tree | `findmnt` | Hierarchical ASCII/UTF-8 tree of active mounts |
+| Verify fstab file | `findmnt --verify` | Validates `/etc/fstab` syntax and paths before reboot |
+| Find mount owning path | `findmnt -T /var/log` | Resolves mountpoint containing file or directory |
+| Mimic df disk usage | `findmnt -D` | Displays capacity, used, avail, and use% |
+| JSON output for scripts | `findmnt -J -o TARGET,SOURCE,FSTYPE` | Emits structured JSON dataset |
+| Real-time event monitor | `findmnt --poll` | Monitors `/proc/self/mountinfo` for mount/umount events |
+| Filter by filesystem type | `findmnt -t ext4,xfs` | Shows only specified filesystem drivers |
+
+### 4.2 Default Hierarchical Mount Tree
 
 Running `findmnt` with no arguments produces a tree representation of all active kernel mount points:
 
+```bash
+findmnt
+```
 ```console
-$ findmnt
 TARGET                                SOURCE      FSTYPE      OPTIONS
 /                                     /dev/sda2   ext4        rw,relatime,errors=remount-ro
 ├─/sys                                sysfs       sysfs       rw,nosuid,nodev,noexec,relatime
@@ -103,20 +119,24 @@ TARGET                                SOURCE      FSTYPE      OPTIONS
 └─/home                               /dev/sdb1   xfs         rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota
 ```
 
-### 4.2 Querying a Specific Mount Point or Device
+### 4.3 Querying a Specific Mount Point or Device
 
 Inspect the exact mount details of a directory:
 
+```bash
+findmnt /home
+```
 ```console
-$ findmnt /home
 TARGET SOURCE    FSTYPE OPTIONS
 /home  /dev/sdb1 xfs    rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota
 ```
 
 Query by source device:
 
+```bash
+findmnt /dev/sda1
+```
 ```console
-$ findmnt /dev/sda1
 TARGET    SOURCE    FSTYPE OPTIONS
 /boot/efi /dev/sda1 vfat   rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro
 ```
@@ -129,15 +149,19 @@ TARGET    SOURCE    FSTYPE OPTIONS
 
 Administrators should always verify `/etc/fstab` integrity after modifying mount definitions to prevent unbootable systems:
 
+> [!IMPORTANT]
+> Always execute `findmnt --verify` after modifying `/etc/fstab`. It parses every directive, verifies target directory existence, and detects deprecated or malformed options, preventing catastrophic system boot lockouts.
+
+```bash
+findmnt --verify
+```
 ```console
-$ findmnt --verify
 Success: no errors found in /etc/fstab
 ```
 
 When an invalid option, missing directory, or broken identifier exists, `findmnt --verify` flags the exact line and failure reason:
 
 ```console
-$ findmnt --verify
 /etc/fstab: [line 9]: target '/data/backup' does not exist
 /etc/fstab: [line 11]: unknown mount option 'noatimeee'
 FAILED: 2 errors found in /etc/fstab
@@ -147,8 +171,10 @@ FAILED: 2 errors found in /etc/fstab
 
 `findmnt -D` presents filesystem capacity and utilization alongside VFS metadata:
 
+```bash
+findmnt -D
+```
 ```console
-$ findmnt -D
 SOURCE     FSTYPE      SIZE   USED  AVAIL USE% TARGET
 /dev/sda2  ext4       49.1G  14.2G  32.4G  29% /
 udev       devtmpfs    3.8G      0   3.8G   0% /dev
@@ -160,8 +186,10 @@ udev       devtmpfs    3.8G      0   3.8G   0% /dev
 
 When debugging storage exhaustion or determining whether a file resides on an NFS share, SSD, or tmpfs, use `-T` (`--target`):
 
+```bash
+findmnt -T /var/log/audit/audit.log
+```
 ```console
-$ findmnt -T /var/log/audit/audit.log
 TARGET SOURCE    FSTYPE OPTIONS
 /      /dev/sda2 ext4   rw,relatime,errors=remount-ro
 ```
@@ -170,8 +198,10 @@ TARGET SOURCE    FSTYPE OPTIONS
 
 List all active mounts configured with read-only permissions (`ro`):
 
+```bash
+findmnt -O ro
+```
 ```console
-$ findmnt -O ro
 TARGET                   SOURCE     FSTYPE OPTIONS
 /sys/fs/cgroup/memory    cgroup     cgroup ro,nosuid,nodev,noexec,relatime,memory
 /var/lib/snapd/snaps/core /dev/loop0 squashfs ro,nodev,relatime
@@ -179,8 +209,10 @@ TARGET                   SOURCE     FSTYPE OPTIONS
 
 Filter by filesystem type to display only physical disk partitions (`ext4,xfs,btrfs`):
 
+```bash
+findmnt -t ext4,xfs,btrfs
+```
 ```console
-$ findmnt -t ext4,xfs,btrfs
 TARGET SOURCE    FSTYPE OPTIONS
 /      /dev/sda2 ext4   rw,relatime,errors=remount-ro
 /home  /dev/sdb1 xfs    rw,relatime,attr2,inode64,logbufs=8,logbsize=32k,noquota
@@ -194,8 +226,10 @@ TARGET SOURCE    FSTYPE OPTIONS
 
 Modern infrastructure tools parse JSON rather than screen-scraping text tables. `findmnt -J` emits structured JSON representations:
 
-```console
-$ findmnt -J -o TARGET,SOURCE,FSTYPE,OPTIONS /home
+```bash
+findmnt -J -o TARGET,SOURCE,FSTYPE,OPTIONS /home
+```
+```json
 {
    "filesystems": [
       {
@@ -212,15 +246,19 @@ Extract the source device programmatically with `jq`:
 
 ```bash
 findmnt -J -o TARGET,SOURCE /home | jq -r '.filesystems[0].source'
-# Output: /dev/sdb1
+```
+```text
+/dev/sdb1
 ```
 
 ### 6.2 Monitoring Mount and Unmount Events
 
 The `-p` (`--poll`) option monitors `/proc/self/mountinfo` in real time, reacting to storage attachment, container volume binds, and unmount operations:
 
+```bash
+findmnt --poll
+```
 ```console
-$ findmnt --poll
 ACTION     TARGET         SOURCE     FSTYPE OPTIONS
 mount      /mnt/usb       /dev/sdc1  ext4   rw,relatime
 umount     /mnt/usb
@@ -229,7 +267,6 @@ umount     /mnt/usb
 Limit polling duration using `--timeout`:
 
 ```bash
-# Monitor for 10 seconds (10,000 milliseconds)
 findmnt --poll --timeout 10000
 ```
 
@@ -275,7 +312,8 @@ done < <(findmnt -rn -o TARGET,SOURCE,FSTYPE -t ext4,xfs)
 
 ### 8.1 Read-Only Execution Safety
 
-`findmnt` is an inspection utility that does not alter filesystems, mount states, or storage tables. It operates safely in production environments with unprivileged user permissions.
+> [!NOTE]
+> `findmnt` is an entirely non-destructive query utility that reads kernel memory structures directly via `/proc/self/mountinfo`. It does not alter filesystems, mount states, or storage tables, and can be run safely by unprivileged users in production environments.
 
 ### 8.2 Path Resolution and Symbolic Links
 
