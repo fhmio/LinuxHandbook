@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `OpenSSH 10.5` | **POSIX**: `None (OpenSSH standard)` | **Safety Tier**: `safe-read-only` | **Scope**: `Non-interactive host key gathering & known_hosts provisioning`
+
 `ssh-keyscan` is a diagnostic and provisioning utility in the **OpenSSH** suite that gathers the public SSH host keys of a number of hosts. It is designed to aid in building and auditing `known_hosts` files and bootstrapping fleet configuration across modern infrastructure.
 
 - **Upstream Project & Provenance**: Maintained within OpenSSH (`openssh-clients`).
@@ -67,17 +69,32 @@ ssh-keyscan [-46cDHqv] [-f file] [-p port] [-T timeout]
 
 ## 4. Basic Usage
 
-### 4.1 Gathering Ed25519 Host Key for a Single Host
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Gather Ed25519 host key | `ssh-keyscan -t ed25519 192.168.1.100` | Gathers Ed25519 public host key |
+| Append key to known_hosts | `ssh-keyscan -t ed25519 host.example.com >> ~/.ssh/known_hosts` | Bootstraps personal trusted hosts file |
+| Scan with hashed hostname | `ssh-keyscan -H -t ed25519 host.example.com` | `-H` hashes host/IP for reconnaissance defense |
+| Scan non-standard SSH port | `ssh-keyscan -p 2222 -t ed25519 host.example.com` | `-p` sets remote target port |
+| Scan hosts from file list | `ssh-keyscan -f host_list.txt` | `-f` reads targets line-by-line |
+| Fast scan with short timeout | `ssh-keyscan -T 2 -t ed25519 -f hosts.txt` | `-T` reduces timeout to 2 seconds |
+| Quiet scripted scan | `ssh-keyscan -q -t ed25519 host.example.com` | `-q` suppresses comments and diagnostic stderr |
+
+### 4.2 Gathering Ed25519 Host Key for a Single Host
 
 ```bash
 ssh-keyscan -t ed25519 192.168.1.100
 ```
+
+*Sample terminal output:*
+
 ```text
 # 192.168.1.100:22 SSH-2.0-OpenSSH_10.5
 192.168.1.100 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOrX...admin@web-node-01
 ```
 
-### 4.2 Appending Directly to User `known_hosts`
+### 4.3 Appending Directly to User known_hosts
 
 ```bash
 ssh-keyscan -t ed25519 gitlab.corp.example.com >> ~/.ssh/known_hosts
@@ -94,6 +111,7 @@ Scanning a list of 50 cluster nodes from a file and generating a hashed known ho
 ```bash
 ssh-keyscan -t ed25519 -H -f cluster_nodes.txt > /etc/ssh/ssh_known_hosts
 ```
+
 - **Technical Analysis**: `-H` hashes each hostname and IP address using SHA1 HMAC with a random salt per line, preventing unauthorized users on the system from enumerating cluster hosts by inspecting `/etc/ssh/ssh_known_hosts`.
 
 ### 5.2 Scanning Non-Standard SSH Ports
@@ -103,10 +121,14 @@ Gathering keys from servers running SSH on port `2222`:
 ```bash
 ssh-keyscan -p 2222 -t ed25519 bastion.corp.example.com
 ```
+
+*Sample terminal output:*
+
 ```text
 # bastion.corp.example.com:2222 SSH-2.0-OpenSSH_10.5
 [bastion.corp.example.com]:2222 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPq...
 ```
+
 - Notice that non-standard ports automatically enclose the host in square brackets (`[host]:port`), conforming to OpenSSH `known_hosts` syntax.
 
 ### 5.3 CI/CD Runner Known Hosts Initialization
@@ -130,6 +152,7 @@ When scanning large subnets, default timeouts may cause long delays on unreachab
 ```bash
 ssh-keyscan -T 2 -t ed25519 -f subnet_ips.txt 2> scan_errors.log > valid_hosts.txt
 ```
+
 - Separates valid `known_hosts` records on `stdout` from connection failures logged on `stderr`.
 
 ---
@@ -140,14 +163,16 @@ ssh-keyscan -T 2 -t ed25519 -f subnet_ips.txt 2> scan_errors.log > valid_hosts.t
 
 | Exit Code | Condition | Upstream Note |
 |:---:|:---|:---|
-| `0` | Clean execution. **Important**: Returns `0` even if some or all target hosts failed to respond. |
-| `1` | Command-line argument error or invalid file input. |
+| `0` | Clean execution. | Returns `0` even if some or all target hosts failed to respond. |
+| `1` | Command-line argument error or invalid file input. | Bad arguments or unreadable files. |
 
-- Because `ssh-keyscan` returns `0` even if connections fail, automation scripts must check that output is non-empty before proceeding:
-  ```bash
-  keys=$(ssh-keyscan -t ed25519 host.example.com)
-  [ -n "$keys" ] || { echo "Error: Failed to obtain host key"; exit 1; }
-  ```
+> [!WARNING]
+> **Silent Exit Code Trap**: `ssh-keyscan` returns exit status `0` even if network connections fail and zero keys are retrieved. Automation scripts must test that captured output is non-empty before appending to configuration:
+>
+> ```bash
+> keys=$(ssh-keyscan -t ed25519 host.example.com)
+> [ -n "$keys" ] || { echo "Error: Failed to obtain host key"; exit 1; }
+> ```
 
 ---
 
@@ -155,25 +180,34 @@ ssh-keyscan -T 2 -t ed25519 -f subnet_ips.txt 2> scan_errors.log > valid_hosts.t
 
 ### 8.1 Man-in-the-Middle (MITM) Vulnerability Warning
 
-- **Upstream Caveat**: `ssh-keyscan` does **not** verify the authenticity of the host keys it gathers. If a network adversary conducts a Man-in-the-Middle (MITM) attack or DNS spoofing while `ssh-keyscan` executes, the utility will capture the adversary's key and inject it into your trusted `known_hosts`.
-- **Security Control**: In high-security environments, always verify the fingerprint of keys gathered via `ssh-keyscan` through an out-of-band channel (e.g. server console, cloud metadata API) before trusting them in production.
+> [!WARNING]
+> **MITM Injection Vulnerability**: `ssh-keyscan` does **not** verify the cryptographic authenticity of the host keys it gathers. If a network adversary conducts a Man-in-the-Middle (MITM) attack or DNS spoofing while `ssh-keyscan` executes, the utility will capture the adversary's key and inject it into your trusted `known_hosts`.
+>
+> In high-security environments, always verify the fingerprint of keys gathered via `ssh-keyscan` through an out-of-band channel (such as server console or cloud metadata API) before trusting them in production.
 
 ---
 
 ## 9. Best Practices
 
 1. **Explicitly Restrict Key Types with `-t ed25519`**:
-   - *Guidance*: Always specify `-t ed25519` or `-t ed25519,ecdsa`.
-   - *Authoritative Justification*: Prevents collecting deprecated RSA or DSA host keys.
+   > [!TIP]
+   > *Guidance*: Always specify `-t ed25519` or `-t ed25519,ecdsa`.
+   > *Authoritative Justification*: Prevents collecting deprecated RSA or DSA host keys.
+
 2. **Always Hash Output in Shared Environments with `-H`**:
-   - *Guidance*: Use `-H` when writing to system-wide `/etc/ssh/ssh_known_hosts`.
-   - *Authoritative Justification*: OpenSSH manual states that hashed hostnames prevent exposure of network topology to local unprivileged users.
+   > [!TIP]
+   > *Guidance*: Use `-H` when writing to system-wide `/etc/ssh/ssh_known_hosts`.
+   > *Authoritative Justification*: OpenSSH manual states that hashed hostnames prevent exposure of network topology to local unprivileged users.
+
 3. **Never Blindly Trust Scanned Keys on Public Networks**:
-   - *Guidance*: Verify fingerprints out-of-band (`ssh-keygen -lf -`) after scanning.
-   - *Authoritative Justification*: OpenSSH upstream explicitly notes that keyscan does not validate certificates or authenticate remote servers.
+   > [!WARNING]
+   > *Guidance*: Verify fingerprints out-of-band (`ssh-keygen -lf -`) after scanning.
+   > *Authoritative Justification*: OpenSSH upstream explicitly notes that keyscan does not validate certificates or authenticate remote servers.
+
 4. **Enforce Connection Timeouts (`-T`) in Automated Scripts**:
-   - *Guidance*: Set `-T 3` or `-T 5` in automated orchestration scripts.
-   - *Authoritative Justification*: Prevents hung pipelines when target hosts are offline or firewalled.
+   > [!TIP]
+   > *Guidance*: Set `-T 3` or `-T 5` in automated orchestration scripts.
+   > *Authoritative Justification*: Prevents hung pipelines when target hosts are offline or firewalled.
 
 ---
 
