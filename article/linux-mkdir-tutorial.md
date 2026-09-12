@@ -22,6 +22,8 @@ The **Linux Command Tutorial** series provides rigorous, upstream-verified refer
 
 ## 1. Introduction
 
+> **Upstream**: `GNU Coreutils 9.11` | **POSIX**: `POSIX.1-2024 (with GNU extensions)` | **Safety Tier**: `unprivileged-filesystem-write` | **Scope**: `Directory allocation, parent path synthesis (-p) & permission initialization`
+
 `mkdir` creates directories on the filesystem. It invokes the `mkdirat(2)` system call, allocating directory inodes and initializing the default `.` (current directory) and `..` (parent directory) entries.
 
 - **Upstream Project & Provenance**: Distributed in **GNU Coreutils** (`coreutils`).
@@ -61,17 +63,29 @@ mkdir [OPTION]... DIRECTORY...
 
 ## 4. Basic Usage
 
-### 4.1 Creating a Directory
+### 4.1 Quick Reference & Common Invocations
+
+| Task / Scenario | Command | Key Flags / Behavior |
+|:---|:---|:---|
+| Create single directory | `mkdir projects` | Creates new directory under current path |
+| Create nested path (parents) | `mkdir -p /opt/app/logs` | `-p` synthesizes intermediate parent directories |
+| Idempotent creation (no error if exists) | `mkdir -p /var/run/app` | Returns `0` whether path exists or not |
+| Create with explicit mode | `mkdir -m 0700 private_keys` | `-m` sets permission bits directly, bypassing umask |
+| Verbose creation logging | `mkdir -v -p build/{src,bin}` | `-v` prints each newly allocated path |
+| Brace expansion multiple directories | `mkdir -p app/{config,data,logs}` | Generates sibling directories in one command |
+
+### 4.2 Creating a Directory
 
 ```bash
 mkdir projects
 ```
 
-### 4.2 Creating Nested Directory Trees
+### 4.3 Creating Nested Directory Trees
 
 ```bash
 mkdir -p /opt/myapp/data/logs
 ```
+
 - Creates `/opt/myapp`, `/opt/myapp/data`, and `/opt/myapp/data/logs` in a single command, returning success (`0`) even if `/opt/myapp` already existed.
 
 ---
@@ -85,6 +99,7 @@ Creating a private directory for SSL certificates accessible only by root:
 ```bash
 mkdir -m 0700 -p /etc/ssl/private_keys
 ```
+
 - **Technical Analysis**: Directly creates the directory with `rwx------` (`0700`) mode, eliminating the race condition of creating a world-readable directory and subsequent `chmod`.
 
 ### 5.2 Verbose Directory Creation for Build Scripts
@@ -92,6 +107,9 @@ mkdir -m 0700 -p /etc/ssl/private_keys
 ```bash
 mkdir -v -p build/{src,obj,bin}
 ```
+
+*Sample terminal output:*
+
 ```console
 mkdir: created directory 'build'
 mkdir: created directory 'build/src'
@@ -108,9 +126,10 @@ mkdir: created directory 'build/bin'
 In automated deployment scripts, running `mkdir dir` fails with `File exists` if the directory is already present. Using `-p` guarantees idempotency:
 
 ```bash
-# Idempotent: returns 0 whether /var/run/app exists or not
 mkdir -p /var/run/app
 ```
+
+- Returns exit code `0` whether `/var/run/app` is newly created or previously existed.
 
 ---
 
@@ -129,20 +148,29 @@ mkdir -p /var/run/app
 
 ### 8.1 Mode Application Nuance with `-p`
 
-When using `mkdir -m <mode> -p path/to/dir`:
-- The `-m` mode applies **only** to the final target directory (`dir`).
-- Intermediate parent directories (`path/` and `path/to/`) are created with default `umask` permissions modified by `u+wx`.
+> [!WARNING]
+> **Intermediate Directory Permission Nuance**: When running `mkdir -m <mode> -p path/to/dir`, the explicit `-m` mode applies **only** to the final leaf directory (`dir`).
+>
+> Intermediate parent directories (`path/` and `path/to/`) are created with the process default `umask` permissions modified by `u+wx`. If parent paths must also be restricted, create each directory level explicitly.
+
+### 8.2 Existing File Conflicts
+
+> [!NOTE]
+> If any component of the requested path already exists as a regular file, symlink to a non-directory, or socket, `mkdir` (even with `-p`) aborts with `Not a directory` or `File exists`.
 
 ---
 
 ## 9. Best Practices
 
 1. **Always Use `-p` in Shell Scripts and CI Pipelines**:
-   - *Guidance*: Default all script directory setups to `mkdir -p`.
-   - *Authoritative Justification*: GNU and POSIX documentation confirm that `-p` treats existing directories as non-errors, guaranteeing idempotent execution.
+   > [!TIP]
+   > *Guidance*: Default all script directory setups to `mkdir -p`.
+   > *Authoritative Justification*: GNU and POSIX documentation confirm that `-p` treats existing directories as non-errors, guaranteeing idempotent execution.
+
 2. **Use `-m` to Avoid Permission Race Conditions**:
-   - *Guidance*: Create sensitive directories using `mkdir -m 0700`.
-   - *Authoritative Justification*: Eliminates the security window where a newly created directory is temporarily readable by other users before a separate `chmod` executes.
+   > [!IMPORTANT]
+   > *Guidance*: Create sensitive directories using `mkdir -m 0700`.
+   > *Authoritative Justification*: Eliminates the security window where a newly created directory is temporarily readable by other users before a separate `chmod` executes.
 
 ---
 
