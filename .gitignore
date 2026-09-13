@@ -1,0 +1,19 @@
+# Node dependencies & VitePress build
+node_modules/
+.vitepress/dist/
+.vitepress/cache/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# Operating System & IDE artifacts
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

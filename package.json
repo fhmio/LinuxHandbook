@@ -17,6 +17,6 @@
     "lint:inventory": "python scripts/validate_inventory.py"
   },
   "devDependencies": {
-    "vitepress": "^1.6.3"
+    "vitepress": "^1.6.4"
   }
 }
