@@ -1,0 +1,48 @@
+name: CI Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate-content:
+    name: Validate Articles & Inventory
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install validation dependencies
+        run: pip install jsonschema pyyaml
+
+      - name: Validate Upstream Inventory
+        run: python scripts/validate_inventory.py
+
+      - name: Validate Article Contracts
+        run: python scripts/validate_articles.py --all
+
+  validate-docs-build:
+    name: Validate Documentation Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Test Build Documentation
+        run: npm run docs:build
