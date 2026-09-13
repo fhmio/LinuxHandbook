@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/forrestchang-linux-command-tutorials/schemas/upstream-inventory.json",
+  "$id": "https://github.com/fhmio/LinuxHandbook/schemas/upstream-inventory.json",
   "title": "LinuxCommandInventoryEntry",
   "description": "Authoritative upstream inventory record for an individual Linux executable utility.",
   "type": "object",

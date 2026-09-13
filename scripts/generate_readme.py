@@ -161,15 +161,17 @@ def build_readme(output_path: Path) -> None:
     lines = []
     
     # Hero & Header
-    lines.append("# Linux Command Reference Library & Systems Playbook\n")
+    lines.append("# LinuxHandbook — The Authoritative Linux Reference & Systems Playbook\n")
     lines.append("> **An authoritative, upstream-verified reference library and operational systems playbook covering 53 essential Linux binaries.**\n")
     lines.append("Every guide provides exhaustive option matrices, verified real-world terminal workflows, exit code specifications, security boundaries, and upstream-cited best practices compliant with **IEEE Std 1003.1-2024 (POSIX.1-2024)** and modern Linux distributions.\n")
     
     # Badges
-    lines.append("[![Articles](https://img.shields.io/badge/Catalog-53%20Guides%20Available-blue?style=flat-square)](#-upstream-command-catalog)")
+    lines.append("[![GitHub CI](https://github.com/fhmio/LinuxHandbook/actions/workflows/ci.yml/badge.svg)](https://github.com/fhmio/LinuxHandbook/actions)")
+    lines.append("[![Catalog](https://img.shields.io/badge/Catalog-53%20Guides%20Available-blue?style=flat-square)](#-upstream-command-catalog)")
     lines.append("[![POSIX](https://img.shields.io/badge/Standard-POSIX.1--2024%20Audited-green?style=flat-square)](#-project-standards--verification)")
     lines.append("[![Verification](https://img.shields.io/badge/Validation-100%25%20Verified-brightgreen?style=flat-square)](#-automated-verification-suite)")
     lines.append("[![Playbooks](https://img.shields.io/badge/Playbooks-6%20Incident%20Tracks-orange?style=flat-square)](#-operational-playbooks)")
+    lines.append("[![Docs](https://img.shields.io/badge/Docs-VitePress%20Portal-646cff?style=flat-square)](https://fhmio.github.io/LinuxHandbook/)")
     lines.append("[![License](https://img.shields.io/badge/License-MIT-purple?style=flat-square)](https://opensource.org/licenses/MIT)\n")
     
     # Navigation Bar

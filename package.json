@@ -1,0 +1,22 @@
+{
+  "name": "linuxhandbook",
+  "version": "1.0.0",
+  "description": "The Authoritative Linux Reference & Operational Systems Playbook",
+  "homepage": "https://github.com/fhmio/LinuxHandbook#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fhmio/LinuxHandbook.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "docs:dev": "vitepress dev",
+    "docs:build": "vitepress build",
+    "docs:preview": "vitepress preview",
+    "lint:articles": "python scripts/validate_articles.py --all",
+    "lint:inventory": "python scripts/validate_inventory.py"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}
