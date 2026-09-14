@@ -1,0 +1,87 @@
+:root {
+  --vp-c-brand-1: #2563eb;
+  --vp-c-brand-2: #1d4ed8;
+  --vp-font-family-base: "Inter", "Roboto", sans-serif;
+  --vp-layout-max-width: 1200px;
+}
+
+/* Center the Nav Links in the header */
+.VPNavBarMenu {
+  display: flex !important;
+  justify-content: center !important;
+  flex: 1;
+}
+
+/* Base custom styles for our new components */
+.linuxize-container {
+  max-width: var(--vp-layout-max-width);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.linuxize-header {
+  text-align: center;
+  padding: 4rem 0;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.linuxize-header h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.linuxize-header p {
+  font-size: 1.25rem;
+  color: #4b5563;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Dark mode adjustments */
+.dark .linuxize-header {
+  background-color: #1e293b;
+  border-bottom-color: #334155;
+}
+.dark .linuxize-header h1 {
+  color: #f8fafc;
+}
+.dark .linuxize-header p {
+  color: #94a3b8;
+}
+
+/* General Layout spacing */
+.linuxize-section {
+  padding: 4rem 0;
+}
+
+.linuxize-section-title {
+  font-size: 1.1rem;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.05em;
+}
+
+.dark .linuxize-section-title {
+  color: #94a3b8;
+}
+
+/* Grid systems */
+.linuxize-grid {
+  display: grid;
+  gap: 24px;
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

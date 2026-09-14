@@ -16,25 +16,14 @@ export default defineConfig({
       }
     },
     nav: [
-      { text: 'Home', link: '/' },
-      { text: 'Command Catalog', link: '/#upstream-command-catalog' },
-      { text: 'Playbooks', link: '/#operational-playbooks' },
-      {
-        text: 'Suites',
-        items: [
-          { text: 'GNU Coreutils', link: '/article/linux-ls-tutorial' },
-          { text: 'Text Processing', link: '/article/linux-grep-tutorial' },
-          { text: 'procps-ng (Process)', link: '/article/linux-ps-tutorial' },
-          { text: 'util-linux (Storage)', link: '/article/linux-mount-tutorial' },
-          { text: 'iproute2 (Network)', link: '/article/linux-ip-tutorial' },
-          { text: 'OpenSSH Suite', link: '/article/linux-ssh-tutorial' },
-          { text: 'Transfer & Archives', link: '/article/linux-curl-tutorial' },
-          { text: 'systemd Services', link: '/article/linux-systemctl-tutorial' },
-          { text: 'Package Management', link: '/article/linux-apt-tutorial' },
-          { text: 'User & Group Management', link: '/article/linux-su-tutorial' },
-          { text: 'Process & Job Control', link: '/article/linux-kill-tutorial' }
-        ]
-      }
+      { text: 'Start Here', link: '/' },
+      { text: 'Linux Commands', link: '/article/linux-ls-tutorial' },
+      { text: 'Bash', link: '/bash' },
+      { text: 'Ubuntu', link: '/ubuntu' },
+      { text: 'Series', link: '/series' },
+      { text: 'Cheatsheets', link: '/cheatsheets' },
+      { text: 'Tools', link: '/tools' },
+      { text: 'About', link: '/about' }
     ],
     sidebar: [
       {
