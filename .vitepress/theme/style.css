@@ -78,3 +78,19 @@ a, button {
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
   z-index: 1000;
 }
+
+/* Remove side menu and hamburger toggle completely */
+.VPSidebar,
+.VPNavBarHamburger,
+.VPSidebarControl {
+  display: none !important;
+}
+
+.VPContent.has-sidebar {
+  padding-left: 0 !important;
+}
+
+.VPDoc:not(.has-sidebar) .container {
+  max-width: var(--vp-layout-max-width) !important;
+}
+
