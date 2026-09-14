@@ -17,7 +17,7 @@ export default defineConfig({
     },
     nav: [
       { text: 'Start Here', link: '/' },
-      { text: 'Linux Commands', link: '/article/linux-ls-tutorial' },
+      { text: 'Linux Commands', link: '/linux-commands' },
       { text: 'Bash', link: '/bash' },
       { text: 'Ubuntu', link: '/ubuntu' },
       { text: 'Series', link: '/series' },

@@ -14,7 +14,7 @@ const { frontmatter } = useData()
       <CustomHome />
     </template>
     <template #doc-before>
-      <ArticleMeta />
+      <ArticleMeta v-if="frontmatter.layout !== 'custom-home' && frontmatter.layout !== 'page'" />
     </template>
   </Layout>
 </template>
