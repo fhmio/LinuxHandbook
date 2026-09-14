@@ -1,0 +1,68 @@
+[
+  {
+    "command": "apt",
+    "article_filename": "article/linux-apt-tutorial.md",
+    "upstream_suite": "apt",
+    "upstream_package": "apt",
+    "upstream_homepage": "https://salsa.debian.org/apt-team/apt",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://manpages.debian.org/stable/apt/apt.8.en.html",
+      "source_repo_url": "https://salsa.debian.org/apt-team/apt"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "APT 2.9",
+    "research_date": "2026-09-14",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  },
+  {
+    "command": "yum",
+    "article_filename": "article/linux-yum-tutorial.md",
+    "upstream_suite": "yum",
+    "upstream_package": "yum",
+    "upstream_homepage": "http://yum.baseurl.org/",
+    "official_documentation": {
+      "doc_type": "man-page",
+      "man_section": 8,
+      "primary_url": "https://linux.die.net/man/8/yum",
+      "source_repo_url": "https://github.com/rpm-software-management/yum"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "YUM 3.4.3",
+    "research_date": "2026-09-14",
+    "lifecycle_status": "deprecated-upstream",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  },
+  {
+    "command": "dnf",
+    "article_filename": "article/linux-dnf-tutorial.md",
+    "upstream_suite": "dnf",
+    "upstream_package": "dnf",
+    "upstream_homepage": "https://dnf.readthedocs.io/en/latest/",
+    "official_documentation": {
+      "doc_type": "html-manual",
+      "man_section": 8,
+      "primary_url": "https://dnf.readthedocs.io/en/latest/command_ref.html",
+      "source_repo_url": "https://github.com/rpm-software-management/dnf"
+    },
+    "standard_status": {
+      "is_posix_standardized": false,
+      "compliance_level": "de-facto-standard"
+    },
+    "current_researched_version": "DNF 4.14",
+    "research_date": "2026-09-14",
+    "lifecycle_status": "active",
+    "article_status": "published",
+    "execution_safety_tier": "privileged-system-destructive"
+  }
+]
