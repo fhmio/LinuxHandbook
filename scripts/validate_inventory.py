@@ -26,6 +26,13 @@ ALLOWED_SUITES = {
     "gnu-tar",
     "gnu-gzip",
     "xz-utils",
+    "apt",
+    "yum",
+    "dnf",
+    "sudo",
+    "shadow-utils",
+    "psmisc",
+    "bash",
 }
 
 ALLOWED_DOC_TYPES = {"man-page", "texinfo", "html-manual", "rfc", "kernel-doc"}
