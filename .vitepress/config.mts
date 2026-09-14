@@ -29,7 +29,10 @@ export default defineConfig({
           { text: 'iproute2 (Network)', link: '/article/linux-ip-tutorial' },
           { text: 'OpenSSH Suite', link: '/article/linux-ssh-tutorial' },
           { text: 'Transfer & Archives', link: '/article/linux-curl-tutorial' },
-          { text: 'systemd Services', link: '/article/linux-systemctl-tutorial' }
+          { text: 'systemd Services', link: '/article/linux-systemctl-tutorial' },
+          { text: 'Package Management', link: '/article/linux-apt-tutorial' },
+          { text: 'User & Group Management', link: '/article/linux-su-tutorial' },
+          { text: 'Process & Job Control', link: '/article/linux-kill-tutorial' }
         ]
       }
     ],
@@ -88,6 +91,15 @@ export default defineConfig({
         ]
       },
       {
+        text: '⚙️ Process & Job Control',
+        collapsed: false,
+        items: [
+          { text: 'kill — Signal Processes', link: '/article/linux-kill-tutorial' },
+          { text: 'killall — Signal by Name', link: '/article/linux-killall-tutorial' },
+          { text: 'jobs — Shell Job Control', link: '/article/linux-jobs-tutorial' }
+        ]
+      },
+      {
         text: '💾 Storage & Partitions (util-linux)',
         collapsed: false,
         items: [
@@ -120,6 +132,26 @@ export default defineConfig({
           { text: 'ssh-agent — Authentication Agent Daemon', link: '/article/linux-ssh-agent-tutorial' },
           { text: 'ssh-add — Private Key Registration', link: '/article/linux-ssh-add-tutorial' },
           { text: 'ssh-keyscan — Host Key Discovery', link: '/article/linux-ssh-keyscan-tutorial' }
+        ]
+      },
+      {
+        text: '👥 User & Group Management',
+        collapsed: false,
+        items: [
+          { text: 'su — Substitute User', link: '/article/linux-su-tutorial' },
+          { text: 'sudo — Superuser Do', link: '/article/linux-sudo-tutorial' },
+          { text: 'useradd — Create New Users', link: '/article/linux-useradd-tutorial' },
+          { text: 'usermod — Modify Users', link: '/article/linux-usermod-tutorial' },
+          { text: 'passwd — Update Passwords', link: '/article/linux-passwd-tutorial' }
+        ]
+      },
+      {
+        text: '📦 Package Management',
+        collapsed: false,
+        items: [
+          { text: 'apt — Debian Package Manager', link: '/article/linux-apt-tutorial' },
+          { text: 'yum — RPM Package Manager (Legacy)', link: '/article/linux-yum-tutorial' },
+          { text: 'dnf — Dandified YUM', link: '/article/linux-dnf-tutorial' }
         ]
       },
       {
