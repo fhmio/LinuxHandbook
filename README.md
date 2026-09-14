@@ -208,8 +208,10 @@ The master reference matrix lists all 53 utilities grouped by official upstream 
 | `blkid` | [blkid](./article/linux-blkid-tutorial.md) | util-linux 2.40 | No | `Safe (Read-Only)` | **Available** |
 | `fdisk` | [fdisk](./article/linux-fdisk-tutorial.md) | util-linux 2.40 | No | `Privileged Destructive` | **Available** |
 | `findmnt` | [findmnt](./article/linux-findmnt-tutorial.md) | util-linux 2.40 | No | `Safe (Read-Only)` | **Available** |
+| `kill` | [kill](./article/linux-kill-tutorial.md) | 2.40 | Yes | `Privileged Destructive` | **Available** |
 | `lsblk` | [lsblk](./article/linux-lsblk-tutorial.md) | util-linux 2.40 | No | `Safe (Read-Only)` | **Available** |
 | `mount` | [mount](./article/linux-mount-tutorial.md) | util-linux 2.40 | No | `Privileged Destructive` | **Available** |
+| `su` | [su](./article/linux-su-tutorial.md) | 2.40 | No | `Privileged Destructive` | **Available** |
 | `umount` | [umount](./article/linux-umount-tutorial.md) | util-linux 2.40 | No | `Privileged Destructive` | **Available** |
 
 ### iproute2 (Linux Networking Suite)
@@ -278,4 +280,4 @@ This repository enforces rigorous architectural and quality contracts through au
    python scripts/generate_readme.py
    ```
 
-**Catalog Summary:** 53/53 articles available and verified.
+**Catalog Summary:** 55/64 articles available and verified.
