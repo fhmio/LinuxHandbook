@@ -46,7 +46,14 @@
         "rsync",
         "gnu-tar",
         "gnu-gzip",
-        "xz-utils"
+        "xz-utils",
+        "apt",
+        "yum",
+        "dnf",
+        "sudo",
+        "shadow-utils",
+        "psmisc",
+        "bash"
       ],
       "description": "Canonical upstream project or suite responsible for the utility."
     },
